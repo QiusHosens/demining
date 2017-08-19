@@ -10,6 +10,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Label;
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.MenuItem;
 import java.awt.Panel;
 import java.awt.Toolkit;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ import demin.listener.MainWindowListener;
 import demin.listener.MineMouseListener;
 import demin.listener.ModelMouseListener;
 import demin.listener.OKMouseListener;
+import demin.listener.RestartActionListener;
 
 public class DeminFrame extends Frame {
 
@@ -46,6 +50,7 @@ public class DeminFrame extends Frame {
 	
 	public DeminFrame(){
 		initParams();
+		setMenuBar(getMenu());
 		refresh();
 		addWindowListener(new MainWindowListener());
 	}
@@ -113,6 +118,10 @@ public class DeminFrame extends Frame {
 			 */
 			if(canFullOpenGrids.isEmpty()){
 				this.refreshFrame();
+				int totalCloseGridCount = allGrids.size();
+				int rand = (int) (Math.random() * totalCloseGridCount);
+				MyGrid grid = allGrids.get(rand);
+				grid.autoMarkOpen();
 				break;
 			}
 			
@@ -136,6 +145,30 @@ public class DeminFrame extends Frame {
 			}
 		}
 		return frame;
+	}
+	
+	private MenuBar getMenu(){
+		MenuBar menuBar = new MenuBar();
+		
+		Menu mainMenu = new Menu();
+		mainMenu.setLabel("Main");
+		
+		MenuItem restartMenuItem = new MenuItem();
+		restartMenuItem.setLabel("Restart");
+		restartMenuItem.addActionListener(new RestartActionListener());
+		mainMenu.add(restartMenuItem);
+		
+		Menu setMenu = new Menu();
+		setMenu.setLabel("Setting");
+		
+		MenuItem panelSetMenuItem = new MenuItem();
+		panelSetMenuItem.setLabel("Set Params");
+		setMenu.add(panelSetMenuItem);
+		
+		menuBar.add(mainMenu);
+		menuBar.add(setMenu);
+		
+		return menuBar;
 	}
 	
 	private Panel getSelectPanel(){
@@ -394,7 +427,7 @@ public class DeminFrame extends Frame {
 	private List<Integer> generateMines(int totalNum, int mineNum){
 		List<Integer> mines = new ArrayList<Integer>();
 		while(mines.size() < mineNum){
-			Integer generateNum = (int) (Math.random() * (totalNum + 1));
+			Integer generateNum = (int) (Math.random() * totalNum);
 			if(!mines.contains(generateNum))
 				mines.add(generateNum);
 		}
@@ -405,10 +438,10 @@ public class DeminFrame extends Frame {
 	public void gameOver(){
 		LayoutConstants.GAME_IS_OVER = true;
 		//暴露全部地雷
-		for(MyGrid grid : grids.values()){
-			if(mines.contains(grid.getPos()))
-				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
-		}
+//		for(MyGrid grid : grids.values()){
+//			if(mines.contains(grid.getPos()))
+//				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
+//		}
 		
 		refreshFrame();
 		
