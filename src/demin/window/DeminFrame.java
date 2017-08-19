@@ -97,8 +97,8 @@ public class DeminFrame extends Frame {
 		allGrids.addAll(grids.values());
 		
 		while(allGrids != null && !allGrids.isEmpty()){
-			//先移除已经完全打开的块
-			allGrids.removeIf(grid -> grid.isFullOpen());
+			//先移除已经完全打开的块和已标识为雷的块
+			allGrids.removeIf(grid -> GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState() || grid.isFullOpen());
 			//找出可以完全打开的块
 			for(int index = allGrids.size() - 1; index >= 0; index --){
 				MyGrid grid = allGrids.get(index);
@@ -108,6 +108,9 @@ public class DeminFrame extends Frame {
 				}
 			}
 			
+			/**
+			 * 如果没有可全部打开的块,则随机打开一个块
+			 */
 			if(canFullOpenGrids.isEmpty())
 				break;
 			
@@ -379,12 +382,12 @@ public class DeminFrame extends Frame {
 	public void gameOver(){
 		LayoutConstants.GAME_IS_OVER = true;
 		//暴露全部地雷
-//		for(MyGrid grid : grids.values()){
-//			if(mines.contains(grid.getPos()))
-//				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
-//		}
-//		
-//		refreshFrame();
+		for(MyGrid grid : grids.values()){
+			if(mines.contains(grid.getPos()))
+				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
+		}
+		
+		refreshFrame();
 		
 		if(dialog == null){
 			dialog = new Dialog(this);

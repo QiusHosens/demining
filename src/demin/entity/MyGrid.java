@@ -4,6 +4,8 @@ import java.awt.Button;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -196,11 +198,11 @@ public class MyGrid extends Button {
 		case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
 			if(image == null){
 				image = GridStateConstants.GRID_IMAGE_MARK_MINE;
-//				image.flush();
+				image.flush();
 				this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
 			}else{
 				image = GridStateConstants.GRID_IMAGE_MARK_MINE;
-//				image.flush();
+				image.flush();
 				this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
 			}
 			break;
@@ -249,6 +251,10 @@ public class MyGrid extends Button {
 					List<MyGrid> unOpenGrids = getUnOpenNotMarkGrids();
 					if(mineNum == 0 || markCount + unOpenGrids.size() == mineNum)
 						autoMarkOpen();
+					else if(markCount == mineNum)
+						mutiOpen();
+					else
+						DeminFrame.getDeminFrame().switchAutoModel();
 				}
 			}
 		}
@@ -287,6 +293,9 @@ public class MyGrid extends Button {
 			}
 			this.setFullOpen(true);//已经全部打开
 		}
+		else{
+			this.open();
+		}
 	}
 	
 	/**
@@ -301,6 +310,8 @@ public class MyGrid extends Button {
 				grid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 			}
 		}
+		else if(markCount == mineNum)
+			mutiOpen();
 		else if(mineNum == 0){
 			if(this.getWnGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE != this.getWnGrid().getState() && GridStateConstants.GRID_STATE_CLOSE == this.getWnGrid().getState()){
 				this.getWnGrid().open();
@@ -328,55 +339,69 @@ public class MyGrid extends Button {
 			}
 			this.setFullOpen(true);
 		}
+		else{
+			this.open();
+		}
 	}
 	
+	/**
+	 * 获取标记为雷的格子
+	 * @return
+	 */
 	public int getMarkCount(){
-		int markCount = 0;//标记数量
-		if(this.getWnGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getWnGrid().getState())
-			markCount ++;
-		if(this.getnGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getnGrid().getState())
-			markCount ++;
-		if(this.getEnGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getEnGrid().getState())
-			markCount ++;
-		if(this.geteGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.geteGrid().getState())
-			markCount ++;
-		if(this.getEsGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getEsGrid().getState())
-			markCount ++;
-		if(this.getsGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getsGrid().getState())
-			markCount ++;
-		if(this.getWsGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getWsGrid().getState())
-			markCount ++;
-		if(this.getwGrid() != null && GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == this.getwGrid().getState())
-			markCount ++;
+		int markCount = getGridByStateInReflect(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE).size();//标记数量
 		return markCount;
 	}
 	
+	/**
+	 * 获取初始状态(即没打开也没标记为雷)的格子
+	 * @return
+	 */
 	public List<MyGrid> getUnOpenNotMarkGrids(){
-		List<MyGrid> unOpenGrids = new ArrayList<MyGrid>();
-		if(this.getWnGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getWnGrid().getState())
-			unOpenGrids.add(this.getWnGrid());
-		if(this.getnGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getnGrid().getState())
-			unOpenGrids.add(this.getnGrid());
-		if(this.getEnGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getEnGrid().getState())
-			unOpenGrids.add(this.getEnGrid());
-		if(this.geteGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.geteGrid().getState())
-			unOpenGrids.add(this.geteGrid());
-		if(this.getEsGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getEsGrid().getState())
-			unOpenGrids.add(this.getEsGrid());
-		if(this.getsGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getsGrid().getState())
-			unOpenGrids.add(this.getsGrid());
-		if(this.getWsGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getWsGrid().getState())
-			unOpenGrids.add(this.getWsGrid());
-		if(this.getwGrid() != null && GridStateConstants.GRID_STATE_CLOSE == this.getwGrid().getState())
-			unOpenGrids.add(this.getwGrid());
+		List<MyGrid> unOpenGrids = getGridByStateInReflect(GridStateConstants.GRID_STATE_CLOSE);
 		return unOpenGrids;
 	}
 	
+	/**
+	 * 根据状态获取周围八宫格的格子
+	 * @param state
+	 * @return
+	 */
+	private List<MyGrid> getGridByStateInReflect(int state){
+		List<MyGrid> grids = new ArrayList<MyGrid>();
+		Method[] methods = this.getClass().getMethods();
+		try {
+			for (Method method : methods) {
+				if(MyGrid.class.equals(method.getReturnType()) && method.getName().endsWith("Grid")
+						&& method.getName().startsWith("get")){
+					MyGrid grid = (MyGrid) method.invoke(this, new Object[]{});
+					if(grid != null && state == grid.getState())
+						grids.add(grid);
+				}
+			}
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		return grids;
+	}
+	
+	/**
+	 * 获取本格子是否能将周围八宫格格子全部打开
+	 * @return
+	 */
 	public boolean canFullOpen(){
+		//未打开不可知
+		if(GridStateConstants.GRID_STATE_CLOSE == state)
+			return false;
+		
 		List<MyGrid> unOpenGrids = getUnOpenNotMarkGrids();
 		int markCount = getMarkCount();
 		
-		if(markCount + unOpenGrids.size() == mineNum || mineNum == 0)
+		if(mineNum == 0 || markCount == mineNum || markCount + unOpenGrids.size() == mineNum)
 			return true;
 		return false;
 	}
@@ -389,6 +414,7 @@ public class MyGrid extends Button {
 	private void refresh(){
 		validate();
 		repaint();
+		DeminFrame.getDeminFrame().refreshFrame();
 	}
 	
 }
