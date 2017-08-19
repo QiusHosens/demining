@@ -70,6 +70,7 @@ public class DeminFrame extends Frame {
 	}
 	
 	public void refresh(){
+		LayoutConstants.GAME_IS_OVER = false;
 		removeAll();
 		
 		LayoutConstants.FRAME_WIDTH = LayoutConstants.MODEL_ROW * Constants.SINGLE_WIDTH + 20;

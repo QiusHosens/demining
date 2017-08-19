@@ -11,7 +11,6 @@ public class RestartActionListener implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		DeminFrame frame = DeminFrame.getDeminFrame();
 		frame.refresh();
-		frame.refreshFrame();
 	}
 
 }
