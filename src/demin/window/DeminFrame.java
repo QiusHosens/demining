@@ -111,8 +111,10 @@ public class DeminFrame extends Frame {
 			/**
 			 * 如果没有可全部打开的块,则随机打开一个块
 			 */
-			if(canFullOpenGrids.isEmpty())
+			if(canFullOpenGrids.isEmpty()){
+				this.refreshFrame();
 				break;
+			}
 			
 			for(int index = canFullOpenGrids.size() - 1; index >= 0; index --){
 				MyGrid grid = canFullOpenGrids.remove(index);
@@ -225,8 +227,29 @@ public class DeminFrame extends Frame {
 		p.add(p_auto, gbc);
 		
 		//默认简单、全手动模式
-		setSingleDifficultyEnable(cb1);
-		setSingleAutoEnable(cb4);
+		switch (LayoutConstants.MODEL_TEXT) {
+		case Constants.MODEL_SIMPLE_TEXT:
+			setSingleDifficultyEnable(cb1);
+			break;
+		case Constants.MODEL_ORDINARY_TEXT:
+			setSingleDifficultyEnable(cb2);
+		case Constants.MODEL_DIFFICULT_TEXT:
+			setSingleDifficultyEnable(cb3);
+		default:
+			break;
+		}
+		
+		switch (LayoutConstants.MODEL_AUTO) {
+		case Constants.MODEL_MANUAL_TEXT:
+			setSingleAutoEnable(cb4);
+			break;
+		case Constants.MODEL_SEMI_AUTO_TEXT:
+			setSingleAutoEnable(cb5);
+		case Constants.MODEL_AUTO_TEXT:
+			setSingleAutoEnable(cb6);
+		default:
+			break;
+		}
 		
 		return p;
 	}

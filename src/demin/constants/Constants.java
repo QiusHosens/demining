@@ -25,7 +25,7 @@ public class Constants {
 	/**
 	 * 简单模式总雷数
 	 */
-	public static final Integer MODEL_SIMPLE_MINE = 20;
+	public static final Integer MODEL_SIMPLE_MINE = 40;
 	
 	/**
 	 * 系数
@@ -55,7 +55,7 @@ public class Constants {
 	/**
 	 * 普通模式雷数
 	 */
-	public static final Integer MODEL_ORDINARY_MINE = 100;
+	public static final Integer MODEL_ORDINARY_MINE = 200;
 	
 	/**
 	 * 困难模式
@@ -80,7 +80,7 @@ public class Constants {
 	/**
 	 * 困难模式雷数
 	 */
-	public static final Integer MODEL_DIFFICULT_MINE = 600;
+	public static final Integer MODEL_DIFFICULT_MINE = 1200;
 	
 	/**
 	 * 全手动模式

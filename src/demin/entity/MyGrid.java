@@ -264,6 +264,9 @@ public class MyGrid extends Button {
 	 * 打开多个,即自动打开可推测不是雷的块
 	 */
 	public void mutiOpen(){
+		if(GridStateConstants.GRID_STATE_CLOSE == this.getState())
+			this.open();
+		
 		int markCount = getMarkCount();
 		
 		if(markCount == mineNum){
@@ -302,6 +305,9 @@ public class MyGrid extends Button {
 	 * 自动标记打开
 	 */
 	public void autoMarkOpen(){
+		if(GridStateConstants.GRID_STATE_CLOSE == this.getState())
+			this.open();
+		
 		List<MyGrid> unOpenGrids = getUnOpenNotMarkGrids();
 		int markCount = getMarkCount();
 		
@@ -414,7 +420,6 @@ public class MyGrid extends Button {
 	private void refresh(){
 		validate();
 		repaint();
-		DeminFrame.getDeminFrame().refreshFrame();
 	}
 	
 }
