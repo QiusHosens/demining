@@ -415,7 +415,7 @@ public class MyGrid extends Button {
 	/**
 	 * 根据相邻块推导并标记或打开块
 	 */
-	public boolean markOrOpenGridByNearGridDeduction(){
+	public boolean markOrOpenGridDeduceByNearGrid(){
 		if(GridStateConstants.GRID_STATE_CLOSE == state)
 			return false;
 		
@@ -438,11 +438,21 @@ public class MyGrid extends Button {
 				for (MyGrid myGrid : selfExcludeOtherGrids) {
 					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 				}
+				if(unsureCount == selfUnsureCount - selfExcludeOtherGrids.size()){
+					for (MyGrid myGrid : otherExcludeSelfGrids) {
+						myGrid.autoMarkOpen();
+					}
+				}
 				return true;
 			}
 			else if(otherExcludeSelfGrids.size() > 0 && unsureCount - selfUnsureCount >= otherExcludeSelfGrids.size()){
 				for (MyGrid myGrid : otherExcludeSelfGrids) {
 					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				}
+				if(selfUnsureCount == unsureCount - otherExcludeSelfGrids.size()){
+					for (MyGrid myGrid : selfExcludeOtherGrids) {
+						myGrid.autoMarkOpen();
+					}
 				}
 				return true;
 			}

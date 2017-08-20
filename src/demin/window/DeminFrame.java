@@ -95,6 +95,9 @@ public class DeminFrame extends Frame {
 		pack();
 		setVisible(true);
 		frame = this;
+		
+		if(Constants.MODEL_AUTO_TEXT.equals(LayoutConstants.MODEL_AUTO))
+			switchAutoModel();
 	}
 	
 	public void switchAutoModel(){
@@ -120,7 +123,7 @@ public class DeminFrame extends Frame {
 			if(canFullOpenGrids.isEmpty()){
 				boolean needReFind = false;
 				for (MyGrid myGrid : allGrids) {
-					boolean haveMark = myGrid.markOrOpenGridByNearGridDeduction();
+					boolean haveMark = myGrid.markOrOpenGridDeduceByNearGrid();
 					if(haveMark)
 						needReFind = true;
 				}
