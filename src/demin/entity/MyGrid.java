@@ -412,6 +412,52 @@ public class MyGrid extends Button {
 		return false;
 	}
 	
+	/**
+	 * 根据相邻块推导并标记或打开块
+	 */
+	public boolean markOrOpenGridByNearGridDeduction(){
+		if(GridStateConstants.GRID_STATE_CLOSE == state)
+			return false;
+		
+		//与格子周围打开不是雷的块中比较,标记雷或打开不是雷的格子
+		List<MyGrid> grids = getGridByStateInReflect(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE);
+		if(grids.isEmpty())
+			return false;
+		
+		for (MyGrid grid : grids) {
+			int selfMarkCount = getMarkCount();//标记为雷的格子数量
+			int selfUnsureCount = mineNum - selfMarkCount;//周围不确定地雷的数量
+			List<MyGrid> selfCloseGrids = getUnOpenNotMarkGrids();
+			
+			int markCount = grid.getMarkCount();
+			int unsureCount = grid.getMineNum() - markCount;
+			List<MyGrid> closeGrids = grid.getUnOpenNotMarkGrids();
+			List<MyGrid> selfExcludeOtherGrids = exclude(selfCloseGrids, closeGrids);
+			List<MyGrid> otherExcludeSelfGrids = exclude(closeGrids, selfCloseGrids);
+			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount >= selfExcludeOtherGrids.size()){
+				for (MyGrid myGrid : selfExcludeOtherGrids) {
+					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				}
+				return true;
+			}
+			else if(otherExcludeSelfGrids.size() > 0 && unsureCount - selfUnsureCount >= otherExcludeSelfGrids.size()){
+				for (MyGrid myGrid : otherExcludeSelfGrids) {
+					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public List<MyGrid> exclude(List<MyGrid> source, List<MyGrid> target){
+		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
+		sourceClone.addAll(source);
+		
+		sourceClone.removeIf(grid -> target.contains(grid));
+		return sourceClone;
+	}
+	
 	public void paint(Graphics g){
 		super.paint(g);
 		g.drawImage(image, 3, 3, this.getWidth() - 6, this.getHeight() - 6, null);

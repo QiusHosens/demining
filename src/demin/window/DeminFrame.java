@@ -118,17 +118,27 @@ public class DeminFrame extends Frame {
 			 * 如果没有可全部打开的块,则随机打开一个块
 			 */
 			if(canFullOpenGrids.isEmpty()){
-				this.refreshFrame();
-				int totalCloseGridCount = allGrids.size();
-				int rand = (int) (Math.random() * totalCloseGridCount);
-				MyGrid grid = allGrids.get(rand);
-				grid.autoMarkOpen();
-				break;
+				boolean needReFind = false;
+				for (MyGrid myGrid : allGrids) {
+					boolean haveMark = myGrid.markOrOpenGridByNearGridDeduction();
+					if(haveMark)
+						needReFind = true;
+				}
+				if(!needReFind){
+					this.refreshFrame();
+					int totalCloseGridCount = allGrids.size();
+					int rand = (int) (Math.random() * totalCloseGridCount);
+					MyGrid grid = allGrids.get(rand);
+					grid.autoMarkOpen();
+					break;
+				}
 			}
 			
-			for(int index = canFullOpenGrids.size() - 1; index >= 0; index --){
-				MyGrid grid = canFullOpenGrids.remove(index);
-				grid.autoMarkOpen();
+			if(!canFullOpenGrids.isEmpty()){
+				for(int index = canFullOpenGrids.size() - 1; index >= 0; index --){
+					MyGrid grid = canFullOpenGrids.remove(index);
+					grid.autoMarkOpen();
+				}
 			}
 		}
 	}
@@ -267,8 +277,10 @@ public class DeminFrame extends Frame {
 			break;
 		case Constants.MODEL_ORDINARY_TEXT:
 			setSingleDifficultyEnable(cb2);
+			break;
 		case Constants.MODEL_DIFFICULT_TEXT:
 			setSingleDifficultyEnable(cb3);
+			break;
 		default:
 			break;
 		}
@@ -279,8 +291,10 @@ public class DeminFrame extends Frame {
 			break;
 		case Constants.MODEL_SEMI_AUTO_TEXT:
 			setSingleAutoEnable(cb5);
+			break;
 		case Constants.MODEL_AUTO_TEXT:
 			setSingleAutoEnable(cb6);
+			break;
 		default:
 			break;
 		}
@@ -439,10 +453,10 @@ public class DeminFrame extends Frame {
 	public void gameOver(){
 		LayoutConstants.GAME_IS_OVER = true;
 		//暴露全部地雷
-//		for(MyGrid grid : grids.values()){
-//			if(mines.contains(grid.getPos()))
-//				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
-//		}
+		for(MyGrid grid : grids.values()){
+			if(mines.contains(grid.getPos()))
+				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
+		}
 		
 		refreshFrame();
 		

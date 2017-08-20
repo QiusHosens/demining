@@ -9,6 +9,7 @@ public class RestartActionListener implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		e.getActionCommand();
 		DeminFrame frame = DeminFrame.getDeminFrame();
 		frame.refresh();
 	}
