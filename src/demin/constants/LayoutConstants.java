@@ -27,4 +27,6 @@ public class LayoutConstants {
 	 */
 	public static boolean GAME_IS_OVER = false;
 	
+	public static boolean AUTO_RANDOM_OPEN = false;
+	
 }

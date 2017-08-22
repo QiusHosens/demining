@@ -235,7 +235,7 @@ public class MyGrid extends Button {
 			return;
 		if(isMine){
 			this.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
-			DeminFrame.getDeminFrame().gameOver();
+			DeminFrame.getDeminFrame().gameOver(false);
 		}else{
 			this.setState(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE);
 			this.setLabel(mineNum.toString());

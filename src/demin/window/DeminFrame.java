@@ -3,6 +3,7 @@ package demin.window;
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -129,10 +130,12 @@ public class DeminFrame extends Frame {
 				}
 				if(!needReFind){
 					this.refreshFrame();
-					int totalCloseGridCount = allGrids.size();
-					int rand = (int) (Math.random() * totalCloseGridCount);
-					MyGrid grid = allGrids.get(rand);
-					grid.autoMarkOpen();
+					if(LayoutConstants.AUTO_RANDOM_OPEN){
+						int totalCloseGridCount = allGrids.size();
+						int rand = (int) (Math.random() * totalCloseGridCount);
+						MyGrid grid = allGrids.get(rand);
+						grid.autoMarkOpen();
+					}
 					break;
 				}
 			}
@@ -143,6 +146,18 @@ public class DeminFrame extends Frame {
 					grid.autoMarkOpen();
 				}
 			}
+		}
+		
+		//成功
+		if(allGrids.isEmpty()){
+			int markCount = 0;
+			List<MyGrid> allGridsClone = new ArrayList<MyGrid>(grids.values());
+			for(MyGrid grid : allGridsClone){
+				if(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState())
+					markCount ++;
+			}
+			if(markCount == mines.size())
+				gameOver(true);
 		}
 	}
 	
@@ -453,7 +468,7 @@ public class DeminFrame extends Frame {
 		return mines;
 	}
 	
-	public void gameOver(){
+	public void gameOver(boolean isSuccess){
 		LayoutConstants.GAME_IS_OVER = true;
 		//暴露全部地雷
 		for(MyGrid grid : grids.values()){
@@ -473,8 +488,8 @@ public class DeminFrame extends Frame {
 			dialog.setBounds((LayoutConstants.SCREEN_WIDTH - dWidth) / 2, (LayoutConstants.SCREEN_HEIGHT - dHeight) / 2, dWidth, dHeight);
 			
 			Label label = new Label();
+			label.setName("msg");
 			label.setBounds(10, 5, dWidth, dHeight / 2 - 5);
-			label.setText("Game Over");
 			
 			Button b = new Button();
 			b.setBounds(10, dHeight / 2, dWidth, dHeight / 2);
@@ -488,6 +503,19 @@ public class DeminFrame extends Frame {
 					GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 			dialog.add(b, gbc);
 		}
+		Component[] cs = dialog.getComponents();
+		Label msgLabel = null;
+		for (Component component : cs) {
+			if("msg".equals(component.getName()))
+				msgLabel = (Label) component;
+		}
+		if(msgLabel != null){
+			if(isSuccess)
+				msgLabel.setText("Success");
+			else
+				msgLabel.setText("Game Over");
+		}
+		
 		dialog.setVisible(true);
 	}
 	
