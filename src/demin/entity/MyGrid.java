@@ -456,6 +456,7 @@ public class MyGrid extends Button {
 		if(grids.isEmpty())
 			return false;
 		
+		boolean isChange = false;
 		for (MyGrid grid : grids) {
 			int selfMarkCount = getMarkCount();//标记为雷的格子数量
 			int selfUnsureCount = mineNum - selfMarkCount;//周围不确定地雷的数量
@@ -468,6 +469,7 @@ public class MyGrid extends Button {
 			List<MyGrid> otherExcludeSelfGrids = exclude(closeGrids, selfCloseGrids);
 			List<MyGrid> intersectionGrids = intersection(selfCloseGrids, closeGrids);
 			List<MyGrid> unionGrids = union(selfCloseGrids, closeGrids);
+			
 			//如果自身不确定地雷数量减去其他块不确定地雷数量大于等于自身排除其他后的块数量,则排除后的块都是地雷
 //			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount >= selfExcludeOtherGrids.size()){
 //				for (MyGrid myGrid : selfExcludeOtherGrids) {
@@ -496,29 +498,37 @@ public class MyGrid extends Button {
 			if(!intersectionGrids.isEmpty() && (isValueEqual(selfCloseGrids, intersectionGrids) || isValueEqual(closeGrids, intersectionGrids))){
 				if(isValueEqual(selfCloseGrids, intersectionGrids)){
 					//如果没打开的数量大于等于没确定的数量,则地雷在这些块中;等于的时候,这些是雷
-					if(intersectionGrids.size() == selfUnsureCount)
+					if(intersectionGrids.size() == selfUnsureCount){
 						for (MyGrid myGrid : intersectionGrids) {
 							myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 						}
+						isChange = true;
+					}
 					//如果
-					if(selfUnsureCount == unsureCount)
+					if(selfUnsureCount == unsureCount && !otherExcludeSelfGrids.isEmpty()){
 						for (MyGrid myGrid : otherExcludeSelfGrids) {
 							myGrid.autoMarkOpen();
 						}
+						isChange = true;
+					}
 				}
 				if(isValueEqual(closeGrids, intersectionGrids)){
-					if(intersectionGrids.size() == unsureCount)
+					if(intersectionGrids.size() == unsureCount){
 						for (MyGrid myGrid : intersectionGrids) {
 							myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 						}
-					if(unsureCount == selfUnsureCount)
+						isChange = true;
+					}
+					if(unsureCount == selfUnsureCount && !selfExcludeOtherGrids.isEmpty()){
 						for (MyGrid myGrid : selfExcludeOtherGrids) {
 							myGrid.autoMarkOpen();
 						}
+						isChange = true;
+					}
 				}
 			}
 		}
-		return false;
+		return isChange;
 	}
 	
 	/**
