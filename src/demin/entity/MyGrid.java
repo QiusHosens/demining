@@ -7,7 +7,9 @@ import java.awt.Image;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
@@ -205,6 +207,7 @@ public class MyGrid extends Button {
 				image.flush();
 				this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
 			}
+			DeminFrame.getDeminFrame().decreaseMineNum();
 			break;
 		case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
 			if(image == null){
@@ -368,8 +371,23 @@ public class MyGrid extends Button {
 		return unOpenGrids;
 	}
 	
+	public List<MyGrid> getOpenIsNotMineGrids(){
+		List<MyGrid> openGrids = getGridByStateInReflect(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE);
+		return openGrids;
+	}
+	
+	public List<MyGrid> getOpenIsNotMineAndNotFullOpenGrids(){
+		List<MyGrid> openGrids = getOpenIsNotMineGrids();
+		List<MyGrid> notFullOpenGrids = new ArrayList<MyGrid>();
+		for (MyGrid myGrid : openGrids) {
+			if(!myGrid.isFullOpen)
+				notFullOpenGrids.add(myGrid);
+		}
+		return notFullOpenGrids;
+	}
+	
 	/**
-	 * 根据状态获取周围八宫格的格子
+	 * 根据状态获取周围八宫格的格子,state为-1时,获取所有格子
 	 * @param state
 	 * @return
 	 */
@@ -381,8 +399,12 @@ public class MyGrid extends Button {
 				if(MyGrid.class.equals(method.getReturnType()) && method.getName().endsWith("Grid")
 						&& method.getName().startsWith("get")){
 					MyGrid grid = (MyGrid) method.invoke(this, new Object[]{});
-					if(grid != null && state == grid.getState())
-						grids.add(grid);
+					if(grid != null){
+						if(-1 == state)
+							grids.add(grid);
+						else if(state == grid.getState())
+							grids.add(grid);
+					}
 				}
 			}
 		} catch (IllegalAccessException e) {
@@ -420,7 +442,17 @@ public class MyGrid extends Button {
 			return false;
 		
 		//与格子周围打开不是雷的块中比较,标记雷或打开不是雷的格子
-		List<MyGrid> grids = getGridByStateInReflect(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE);
+		//找相邻打开格子
+		List<MyGrid> grids = getOpenIsNotMineAndNotFullOpenGrids();
+		//找相邻格子的相邻打开格子
+		//所有格子
+		List<MyGrid> allGrids = getGridByStateInReflect(-1);
+		for (MyGrid myGrid : allGrids) {
+			List<MyGrid> oneGrids = myGrid.getOpenIsNotMineAndNotFullOpenGrids();
+			oneGrids.removeIf(grid -> grid.equals(this) || grids.contains(grid));
+			grids.addAll(oneGrids);
+		}
+		
 		if(grids.isEmpty())
 			return false;
 		
@@ -434,38 +466,116 @@ public class MyGrid extends Button {
 			List<MyGrid> closeGrids = grid.getUnOpenNotMarkGrids();
 			List<MyGrid> selfExcludeOtherGrids = exclude(selfCloseGrids, closeGrids);
 			List<MyGrid> otherExcludeSelfGrids = exclude(closeGrids, selfCloseGrids);
-			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount >= selfExcludeOtherGrids.size()){
-				for (MyGrid myGrid : selfExcludeOtherGrids) {
-					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+			List<MyGrid> intersectionGrids = intersection(selfCloseGrids, closeGrids);
+			List<MyGrid> unionGrids = union(selfCloseGrids, closeGrids);
+			//如果自身不确定地雷数量减去其他块不确定地雷数量大于等于自身排除其他后的块数量,则排除后的块都是地雷
+//			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount >= selfExcludeOtherGrids.size()){
+//				for (MyGrid myGrid : selfExcludeOtherGrids) {
+//					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+//				}
+//				//如果不确定地雷差值等于排除后的地雷数,并且不确定地雷数为1,则其他块不是地雷
+//				if(unsureCount == selfUnsureCount - selfExcludeOtherGrids.size() && unsureCount == 1){
+//					for (MyGrid myGrid : otherExcludeSelfGrids) {
+//						myGrid.autoMarkOpen();
+//					}
+//				}
+//				return true;
+//			}
+//			else if(otherExcludeSelfGrids.size() > 0 && unsureCount - selfUnsureCount >= otherExcludeSelfGrids.size()){
+//				for (MyGrid myGrid : otherExcludeSelfGrids) {
+//					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+//				}
+//				if(selfUnsureCount == unsureCount - otherExcludeSelfGrids.size() && selfUnsureCount == 1){
+//					for (MyGrid myGrid : selfExcludeOtherGrids) {
+//						myGrid.autoMarkOpen();
+//					}
+//				}
+//				return true;
+//			}
+			//如果其中一块只有交集没打开了,即确定雷在交集中
+			if(!intersectionGrids.isEmpty() && (isValueEqual(selfCloseGrids, intersectionGrids) || isValueEqual(closeGrids, intersectionGrids))){
+				if(isValueEqual(selfCloseGrids, intersectionGrids)){
+					//如果没打开的数量大于等于没确定的数量,则地雷在这些块中;等于的时候,这些是雷
+					if(intersectionGrids.size() == selfUnsureCount)
+						for (MyGrid myGrid : intersectionGrids) {
+							myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+						}
+					//如果
+					if(selfUnsureCount == unsureCount)
+						for (MyGrid myGrid : otherExcludeSelfGrids) {
+							myGrid.autoMarkOpen();
+						}
 				}
-				if(unsureCount == selfUnsureCount - selfExcludeOtherGrids.size()){
-					for (MyGrid myGrid : otherExcludeSelfGrids) {
-						myGrid.autoMarkOpen();
-					}
+				if(isValueEqual(closeGrids, intersectionGrids)){
+					if(intersectionGrids.size() == unsureCount)
+						for (MyGrid myGrid : intersectionGrids) {
+							myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+						}
+					if(unsureCount == selfUnsureCount)
+						for (MyGrid myGrid : selfExcludeOtherGrids) {
+							myGrid.autoMarkOpen();
+						}
 				}
-				return true;
-			}
-			else if(otherExcludeSelfGrids.size() > 0 && unsureCount - selfUnsureCount >= otherExcludeSelfGrids.size()){
-				for (MyGrid myGrid : otherExcludeSelfGrids) {
-					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
-				}
-				if(selfUnsureCount == unsureCount - otherExcludeSelfGrids.size()){
-					for (MyGrid myGrid : selfExcludeOtherGrids) {
-						myGrid.autoMarkOpen();
-					}
-				}
-				return true;
 			}
 		}
 		return false;
 	}
 	
+	/**
+	 * 补集,即{x|x in source && x not in target}
+	 * @param source
+	 * @param target
+	 * @return
+	 */
 	public List<MyGrid> exclude(List<MyGrid> source, List<MyGrid> target){
 		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
 		sourceClone.addAll(source);
 		
 		sourceClone.removeIf(grid -> target.contains(grid));
 		return sourceClone;
+	}
+	
+	/**
+	 * 交集,即{x|x in source && x in target}
+	 * @param source
+	 * @param target
+	 * @return
+	 */
+	public List<MyGrid> intersection(List<MyGrid> source, List<MyGrid> target){
+		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
+		sourceClone.addAll(source);
+		
+		sourceClone.removeIf(grid -> !target.contains(grid));
+		return sourceClone;
+	}
+	
+	/**
+	 * 并集,即{x|x in source || x in target}
+	 * @param source
+	 * @param target
+	 * @return
+	 */
+	public List<MyGrid> union(List<MyGrid> source, List<MyGrid> target){
+		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
+		sourceClone.addAll(source);
+		
+		sourceClone.addAll(exclude(target, source));
+		return sourceClone;
+	}
+	
+	/**
+	 * 判断list是否相同
+	 * @param source
+	 * @param target
+	 * @return
+	 */
+	public boolean isValueEqual(List<MyGrid> source, List<MyGrid> target){
+		if(source.size() != target.size())
+			return false;
+		for(int index = 0, len = source.size(); index < len; index ++)
+			if(!source.get(index).equals(target.get(index)))
+				return false;
+		return true;
 	}
 	
 	public void paint(Graphics g){
@@ -476,6 +586,13 @@ public class MyGrid extends Button {
 	private void refresh(){
 		validate();
 		repaint();
+	}
+	
+	public boolean equals(Object o){
+		if(o instanceof MyGrid)
+			if(pos == ((MyGrid)o).getPos())
+				return true;
+		return false;
 	}
 	
 }

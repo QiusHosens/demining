@@ -22,6 +22,10 @@ public class LayoutConstants {
 	
 	public static String MODEL_AUTO;
 	
+	public static Integer LEFT_MINE;
+	
+	public static Integer STEP_COUNT;
+	
 	/**
 	 * 游戏是否已经结束
 	 */

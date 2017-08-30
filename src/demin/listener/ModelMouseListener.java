@@ -74,6 +74,8 @@ public class ModelMouseListener implements MouseListener {
 				LayoutConstants.MODEL_COLUMN = Constants.MODEL_SIMPLE_COLUMN;
 				LayoutConstants.MODEL_TOTAL = Constants.MODEL_SIMPLE_TOTAL;
 				LayoutConstants.MODEL_MINE = Constants.MODEL_SIMPLE_MINE;
+				LayoutConstants.LEFT_MINE = LayoutConstants.MODEL_MINE;
+				LayoutConstants.STEP_COUNT = 0;
 				DeminFrame.getDeminFrame().refresh();
 				break;
 			case Constants.MODEL_ORDINARY_TEXT://普通模式
@@ -83,6 +85,8 @@ public class ModelMouseListener implements MouseListener {
 				LayoutConstants.MODEL_COLUMN = Constants.MODEL_ORDINARY_COLUMN;
 				LayoutConstants.MODEL_TOTAL = Constants.MODEL_ORDINARY_TOTAL;
 				LayoutConstants.MODEL_MINE = Constants.MODEL_ORDINARY_MINE;
+				LayoutConstants.LEFT_MINE = LayoutConstants.MODEL_MINE;
+				LayoutConstants.STEP_COUNT = 0;
 				DeminFrame.getDeminFrame().refresh();
 				break;
 			case Constants.MODEL_DIFFICULT_TEXT://困难模式
@@ -92,6 +96,8 @@ public class ModelMouseListener implements MouseListener {
 				LayoutConstants.MODEL_COLUMN = Constants.MODEL_DIFFICULT_COLUMN;
 				LayoutConstants.MODEL_TOTAL = Constants.MODEL_DIFFICULT_TOTAL;
 				LayoutConstants.MODEL_MINE = Constants.MODEL_DIFFICULT_MINE;
+				LayoutConstants.LEFT_MINE = LayoutConstants.MODEL_MINE;
+				LayoutConstants.STEP_COUNT = 0;
 				DeminFrame.getDeminFrame().refresh();
 				break;
 			case Constants.MODEL_MANUAL_TEXT://全手动模式

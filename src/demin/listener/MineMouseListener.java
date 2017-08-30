@@ -38,14 +38,16 @@ public class MineMouseListener implements MouseListener {
 				switch (LayoutConstants.MODEL_AUTO) {
 				case Constants.MODEL_MANUAL_TEXT:
 					if(GridStateConstants.GRID_STATE_CLOSE == grid.getState() || 
-						GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState())
+						GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState()){
 						grid.open();
+					}
 					break;
 				case Constants.MODEL_SEMI_AUTO_TEXT:
 					if(GridStateConstants.GRID_STATE_CLOSE == grid.getState() || 
 						GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState() ||
-							GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE == grid.getState())
+							GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE == grid.getState()){
 						grid.mutiOpen();
+					}
 					break;
 				case Constants.MODEL_AUTO_TEXT:
 					if(GridStateConstants.GRID_STATE_CLOSE == grid.getState() || 
@@ -56,6 +58,8 @@ public class MineMouseListener implements MouseListener {
 				default:
 					break;
 				}
+				//增加步数
+				DeminFrame.getDeminFrame().increaseStepCount();
 				break;
 			case 2://双击
 				if(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE == grid.getState())

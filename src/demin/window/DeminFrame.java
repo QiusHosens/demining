@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
@@ -49,6 +51,14 @@ public class DeminFrame extends Frame {
 	
 	private Dialog dialog;
 	
+	private Label stepCount;
+	
+	private ReentrantReadWriteLock stepLock = new ReentrantReadWriteLock();
+	
+	private Label leftMines;
+	
+	private ReentrantReadWriteLock mineLock = new ReentrantReadWriteLock();
+	
 	public DeminFrame(){
 		initParams();
 		setMenuBar(getMenu());
@@ -68,9 +78,13 @@ public class DeminFrame extends Frame {
 		LayoutConstants.MODEL_TOTAL = Constants.MODEL_SIMPLE_TOTAL;
 		LayoutConstants.MODEL_MINE = Constants.MODEL_SIMPLE_MINE;
 		LayoutConstants.MODEL_AUTO = Constants.MODEL_MANUAL_TEXT;
+		LayoutConstants.LEFT_MINE = LayoutConstants.MODEL_MINE;
+		LayoutConstants.STEP_COUNT = 0;
 	}
 	
 	public void refresh(){
+		LayoutConstants.LEFT_MINE = LayoutConstants.MODEL_MINE;
+		LayoutConstants.STEP_COUNT = 0;
 		LayoutConstants.GAME_IS_OVER = false;
 		removeAll();
 		
@@ -92,6 +106,13 @@ public class DeminFrame extends Frame {
 		gbc = new GridBagConstraints(0, 120, LayoutConstants.FRAME_WIDTH, LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT, 0, 0, GridBagConstraints.CENTER, 
 				GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 		add(minePanel, gbc);
+		
+		Panel bottomPanel = getBottomPanel();
+		bottomPanel.setVisible(true);
+		int height = 120 + LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT + 5;
+		gbc = new GridBagConstraints(0, height, LayoutConstants.FRAME_WIDTH, 30, 0, 0, GridBagConstraints.CENTER, 
+				GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		add(bottomPanel, gbc);
 		
 		pack();
 		setVisible(true);
@@ -135,6 +156,7 @@ public class DeminFrame extends Frame {
 						int rand = (int) (Math.random() * totalCloseGridCount);
 						MyGrid grid = allGrids.get(rand);
 						grid.autoMarkOpen();
+						this.increaseStepCount();
 					}
 					break;
 				}
@@ -439,6 +461,44 @@ public class DeminFrame extends Frame {
 		return p;
 	}
 	
+	public Panel getBottomPanel(){
+		Panel p = new Panel();
+		p.setLayout(new GridBagLayout());
+		int height = 120 + LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT + 5;
+		p.setBounds(10, height, LayoutConstants.FRAME_WIDTH, 40);
+		
+		int per_panel_width = (LayoutConstants.FRAME_WIDTH - 20) / 4;
+		
+		Label stepText = new Label("step count:");
+		stepText.setSize(per_panel_width, 30);
+		
+		stepCount = new Label(LayoutConstants.STEP_COUNT.toString());
+		stepCount.setSize(per_panel_width, 30);
+		
+		Label mineText = new Label("mine count:");
+		mineText.setSize(per_panel_width, 30);
+		
+		leftMines = new Label(LayoutConstants.LEFT_MINE.toString());
+		leftMines.setSize(per_panel_width, 30);
+		
+		GridBagConstraints gbc = new GridBagConstraints(10, 10, per_panel_width, 30, 0, 0, 
+				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		p.add(stepText, gbc);
+		
+		gbc = new GridBagConstraints(10 + per_panel_width, 10, per_panel_width, 30, 0, 0, 
+				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		p.add(stepCount, gbc);
+		
+		gbc = new GridBagConstraints(10 + per_panel_width * 2, 10, per_panel_width, 30, 0, 0, 
+				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		p.add(mineText, gbc);
+		
+		gbc = new GridBagConstraints(10 + per_panel_width * 3, 10, per_panel_width, 30, 0, 0, 
+				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		p.add(leftMines, gbc);
+		return p;
+	}
+	
 	public void setSingleDifficultyEnable(Checkbox cb){
 		if(cb.equals(enableDifficultyBox))
 			return;
@@ -457,6 +517,20 @@ public class DeminFrame extends Frame {
 		enableAutoBox = cb;
 	}
 	
+	public void decreaseMineNum(){
+		mineLock.writeLock().lock();
+		LayoutConstants.LEFT_MINE --;
+		leftMines.setText(LayoutConstants.LEFT_MINE.toString());
+		mineLock.writeLock().unlock();
+	}
+	
+	public void increaseStepCount(){
+		stepLock.writeLock().lock();
+		LayoutConstants.STEP_COUNT ++;
+		stepCount.setText(LayoutConstants.STEP_COUNT.toString());
+		stepLock.writeLock().unlock();
+	}
+	
 	private List<Integer> generateMines(int totalNum, int mineNum){
 		List<Integer> mines = new ArrayList<Integer>();
 		while(mines.size() < mineNum){
@@ -471,10 +545,11 @@ public class DeminFrame extends Frame {
 	public void gameOver(boolean isSuccess){
 		LayoutConstants.GAME_IS_OVER = true;
 		//暴露全部地雷
-		for(MyGrid grid : grids.values()){
-			if(mines.contains(grid.getPos()))
-				grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
-		}
+		if(!isSuccess)
+			for(MyGrid grid : grids.values()){
+				if(mines.contains(grid.getPos()))
+					grid.setState(GridStateConstants.GRID_STATE_OPEN_IS_MINE);
+			}
 		
 		refreshFrame();
 		
