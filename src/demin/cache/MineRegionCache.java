@@ -46,6 +46,10 @@ public class MineRegionCache {
 		return -1;
 	}
 	
+	/**
+	 * 移除已标记为地雷的块
+	 * @param grid
+	 */
 	public static void removeMarkGridPos(MyGrid grid){
 		String pos = String.valueOf(grid.getPos());
 		List<String> removeKeys = new ArrayList<String>();
@@ -65,10 +69,11 @@ public class MineRegionCache {
 						poss += string;
 					else
 						poss += "," + string;
+					index ++;
 				}
 				
 				if(!"".equals(poss))
-					addRegions.put(poss, mineNum);
+					addRegions.put(poss, --mineNum);
 			}
 		}
 		

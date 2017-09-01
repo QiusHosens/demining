@@ -169,6 +169,13 @@ public class DeminFrame extends Frame {
 						}
 						needReFind = true;
 					}
+					else if(mineNum == 0){
+						for (String pos : gridPoss) {
+							MyGrid grid = getGridByPos(Integer.parseInt(pos));
+							grid.autoMarkOpen();
+						}
+						needReFind = true;
+					}
 				}
 				
 				if(!needReFind){

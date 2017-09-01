@@ -481,29 +481,28 @@ public class MyGrid extends Button {
 			List<MyGrid> unionGrids = union(selfCloseGrids, closeGrids);
 			
 			//如果自身不确定地雷数量减去其他块不确定地雷数量大于等于自身排除其他后的块数量,则排除后的块都是地雷
-//			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount >= selfExcludeOtherGrids.size()){
-//				for (MyGrid myGrid : selfExcludeOtherGrids) {
-//					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
-//				}
-//				//如果不确定地雷差值等于排除后的地雷数,并且不确定地雷数为1,则其他块不是地雷
-//				if(unsureCount == selfUnsureCount - selfExcludeOtherGrids.size() && unsureCount == 1){
-//					for (MyGrid myGrid : otherExcludeSelfGrids) {
-//						myGrid.autoMarkOpen();
-//					}
-//				}
-//				return true;
-//			}
-//			else if(otherExcludeSelfGrids.size() > 0 && unsureCount - selfUnsureCount >= otherExcludeSelfGrids.size()){
-//				for (MyGrid myGrid : otherExcludeSelfGrids) {
-//					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
-//				}
-//				if(selfUnsureCount == unsureCount - otherExcludeSelfGrids.size() && selfUnsureCount == 1){
-//					for (MyGrid myGrid : selfExcludeOtherGrids) {
-//						myGrid.autoMarkOpen();
-//					}
-//				}
-//				return true;
-//			}
+			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount == selfExcludeOtherGrids.size() && selfUnsureCount - unsureCount == 1){
+				for (MyGrid myGrid : selfExcludeOtherGrids) {
+					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				}
+				MineRegionCache.putRegion(intersectionGrids, selfUnsureCount - unsureCount);
+				//如果不确定地雷差值等于排除后的地雷数,并且不确定地雷数为1,则其他块不是地雷
+				for (MyGrid myGrid : otherExcludeSelfGrids) {
+					myGrid.autoMarkOpen();
+				}
+				return true;
+			}
+			else if(otherExcludeSelfGrids.size() > 0 && unsureCount - selfUnsureCount == otherExcludeSelfGrids.size() && unsureCount - selfUnsureCount == 1){
+				for (MyGrid myGrid : otherExcludeSelfGrids) {
+					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				}
+				MineRegionCache.putRegion(intersectionGrids, unsureCount - selfUnsureCount);
+				
+				for (MyGrid myGrid : selfExcludeOtherGrids) {
+					myGrid.autoMarkOpen();
+				}
+				return true;
+			}
 			//如果其中一块只有交集没打开了,即确定雷在交集中
 			if(!intersectionGrids.isEmpty() && (isValueEqual(selfCloseGrids, intersectionGrids) || isValueEqual(closeGrids, intersectionGrids))){
 				if(isValueEqual(selfCloseGrids, intersectionGrids)){
@@ -515,9 +514,6 @@ public class MyGrid extends Button {
 						isChange = true;
 					}
 					else if(selfUnsureCount > 0){//如果不等,则这块区域中selfUnsureCount个雷
-						MineRegionCache.putRegion(intersectionGrids, selfUnsureCount);
-					}
-					else{
 						MineRegionCache.putRegion(intersectionGrids, selfUnsureCount);
 					}
 					
@@ -537,9 +533,6 @@ public class MyGrid extends Button {
 						isChange = true;
 					}
 					else if(unsureCount > 0){//如果不等,则这块区域中unsureCount个雷
-						MineRegionCache.putRegion(intersectionGrids, unsureCount);
-					}
-					else{
 						MineRegionCache.putRegion(intersectionGrids, unsureCount);
 					}
 					
