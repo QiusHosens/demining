@@ -7,10 +7,7 @@ import java.awt.Image;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 import demin.cache.MineRegionCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
@@ -217,11 +214,9 @@ public class MyGrid extends Button {
 		case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
 			if(image == null){
 				image = GridStateConstants.GRID_IMAGE_IS_MINE;
-//				image.flush();
 				this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
 			}else{
 				image = GridStateConstants.GRID_IMAGE_IS_MINE;
-//				image.flush();
 				this.imageUpdate(GridStateConstants.GRID_IMAGE_IS_MINE, 32, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
 			}
 			break;
@@ -478,7 +473,6 @@ public class MyGrid extends Button {
 			List<MyGrid> selfExcludeOtherGrids = exclude(selfCloseGrids, closeGrids);
 			List<MyGrid> otherExcludeSelfGrids = exclude(closeGrids, selfCloseGrids);
 			List<MyGrid> intersectionGrids = intersection(selfCloseGrids, closeGrids);
-			List<MyGrid> unionGrids = union(selfCloseGrids, closeGrids);
 			
 			//如果自身不确定地雷数量减去其他块不确定地雷数量大于等于自身排除其他后的块数量,则排除后的块都是地雷
 			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount == selfExcludeOtherGrids.size() && selfUnsureCount - unsureCount == 1){

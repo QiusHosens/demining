@@ -63,6 +63,8 @@ public class DeminFrame extends Frame {
 	
 	private Integer closeCount;
 	
+	private Label closeCountLabel;
+	
 	public DeminFrame(){
 		initParams();
 		setMenuBar(getMenu());
@@ -169,10 +171,10 @@ public class DeminFrame extends Frame {
 						}
 						needReFind = true;
 					}
-					else if(mineNum == 0){
+					else if(mineNum <= 0){
 						for (String pos : gridPoss) {
 							MyGrid grid = getGridByPos(Integer.parseInt(pos));
-							grid.autoMarkOpen();
+							grid.open();
 						}
 						needReFind = true;
 					}
@@ -185,7 +187,7 @@ public class DeminFrame extends Frame {
 						int totalCloseGridCount = allGrids.size();
 						int rand = (int) (Math.random() * totalCloseGridCount);
 						MyGrid grid = allGrids.get(rand);
-						grid.autoMarkOpen();
+						grid.open();
 						this.increaseStepCount();
 					}
 					break;
@@ -195,7 +197,7 @@ public class DeminFrame extends Frame {
 			if(!canFullOpenGrids.isEmpty()){
 				for(int index = canFullOpenGrids.size() - 1; index >= 0; index --){
 					MyGrid grid = canFullOpenGrids.remove(index);
-					grid.autoMarkOpen();
+					grid.open();
 				}
 			}
 		}
@@ -214,7 +216,7 @@ public class DeminFrame extends Frame {
 		
 		if(LayoutConstants.LEFT_MINE == 0){
 			for (MyGrid myGrid : allGrids) {
-				myGrid.autoMarkOpen();
+				myGrid.open();
 			}
 		}
 	}
@@ -503,14 +505,20 @@ public class DeminFrame extends Frame {
 		int height = 120 + LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT + 5;
 		p.setBounds(10, height, LayoutConstants.FRAME_WIDTH, 40);
 		
-		int per_panel_width = (LayoutConstants.FRAME_WIDTH - 20) / 4;
+		int per_panel_width = (LayoutConstants.FRAME_WIDTH - 20) / 6;
+		//close count
+		Label closeText = new Label("close count:");
+		closeText.setSize(per_panel_width, 30);
 		
+		closeCountLabel = new Label(this.closeCount.toString());
+		closeCountLabel.setSize(per_panel_width, 30);
+		//step count
 		Label stepText = new Label("step count:");
 		stepText.setSize(per_panel_width, 30);
 		
 		stepCount = new Label(LayoutConstants.STEP_COUNT.toString());
 		stepCount.setSize(per_panel_width, 30);
-		
+		//mine count
 		Label mineText = new Label("mine count:");
 		mineText.setSize(per_panel_width, 30);
 		
@@ -519,17 +527,25 @@ public class DeminFrame extends Frame {
 		
 		GridBagConstraints gbc = new GridBagConstraints(10, 10, per_panel_width, 30, 0, 0, 
 				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-		p.add(stepText, gbc);
+		p.add(closeText, gbc);
 		
 		gbc = new GridBagConstraints(10 + per_panel_width, 10, per_panel_width, 30, 0, 0, 
 				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-		p.add(stepCount, gbc);
+		p.add(closeCountLabel, gbc);
 		
 		gbc = new GridBagConstraints(10 + per_panel_width * 2, 10, per_panel_width, 30, 0, 0, 
 				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-		p.add(mineText, gbc);
+		p.add(stepText, gbc);
 		
 		gbc = new GridBagConstraints(10 + per_panel_width * 3, 10, per_panel_width, 30, 0, 0, 
+				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		p.add(stepCount, gbc);
+		
+		gbc = new GridBagConstraints(10 + per_panel_width * 4, 10, per_panel_width, 30, 0, 0, 
+				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+		p.add(mineText, gbc);
+		
+		gbc = new GridBagConstraints(10 + per_panel_width * 5, 10, per_panel_width, 30, 0, 0, 
 				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 		p.add(leftMines, gbc);
 		return p;
@@ -644,6 +660,7 @@ public class DeminFrame extends Frame {
 	
 	public void decreseCloseCount(){
 		this.closeCount --;
+		this.closeCountLabel.setText(this.closeCount.toString());
 	}
 	
 	public MyGrid getGridByPos(Integer pos){
