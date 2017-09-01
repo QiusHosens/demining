@@ -33,4 +33,6 @@ public class LayoutConstants {
 	
 	public static boolean AUTO_RANDOM_OPEN = false;
 	
+	public static boolean IS_AUTO_MODEL = false;
+	
 }

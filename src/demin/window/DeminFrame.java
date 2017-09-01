@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import demin.cache.MineRegionCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
@@ -59,6 +61,8 @@ public class DeminFrame extends Frame {
 	
 	private ReentrantReadWriteLock mineLock = new ReentrantReadWriteLock();
 	
+	private Integer closeCount;
+	
 	public DeminFrame(){
 		initParams();
 		setMenuBar(getMenu());
@@ -86,6 +90,8 @@ public class DeminFrame extends Frame {
 		LayoutConstants.LEFT_MINE = LayoutConstants.MODEL_MINE;
 		LayoutConstants.STEP_COUNT = 0;
 		LayoutConstants.GAME_IS_OVER = false;
+		this.closeCount = LayoutConstants.MODEL_TOTAL;
+		MineRegionCache.clear();
 		removeAll();
 		
 		LayoutConstants.FRAME_WIDTH = LayoutConstants.MODEL_ROW * Constants.SINGLE_WIDTH + 20;
@@ -149,8 +155,25 @@ public class DeminFrame extends Frame {
 					if(haveMark)
 						needReFind = true;
 				}
+				
+				//检查地雷区域,如果有区域大小等于区域中地雷数量的区域,则区域内都是地雷
+				for(Entry<String, Integer> entry : MineRegionCache.getRegions().entrySet()){
+					String region = entry.getKey();
+					Integer mineNum = entry.getValue();
+					System.out.println(region + "   " + mineNum);
+					String[] gridPoss = region.split(",");
+					if(gridPoss.length == mineNum){
+						for (String pos : gridPoss) {
+							MyGrid grid = getGridByPos(Integer.parseInt(pos));
+							grid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+						}
+						needReFind = true;
+					}
+				}
+				
 				if(!needReFind){
 					this.refreshFrame();
+					
 					if(LayoutConstants.AUTO_RANDOM_OPEN){
 						int totalCloseGridCount = allGrids.size();
 						int rand = (int) (Math.random() * totalCloseGridCount);
@@ -180,6 +203,12 @@ public class DeminFrame extends Frame {
 			}
 			if(markCount == mines.size())
 				gameOver(true);
+		}
+		
+		if(LayoutConstants.LEFT_MINE == 0){
+			for (MyGrid myGrid : allGrids) {
+				myGrid.autoMarkOpen();
+			}
 		}
 	}
 	
@@ -602,4 +631,16 @@ public class DeminFrame extends Frame {
 		return this.grids;
 	}
 	
+	public Integer getCloseGridCount(){
+		return this.closeCount;
+	}
+	
+	public void decreseCloseCount(){
+		this.closeCount --;
+	}
+	
+	public MyGrid getGridByPos(Integer pos){
+		return this.grids.get(pos);
+	}
+
 }

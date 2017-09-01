@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import demin.cache.MineRegionCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
@@ -195,7 +196,10 @@ public class MyGrid extends Button {
 	}
 	
 	public void setState(int state) {
+		if(this.state == state)
+			return;
 		this.state = state;
+		DeminFrame.getDeminFrame().decreseCloseCount();
 		switch (state) {
 		case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
 			if(image == null){
@@ -208,6 +212,7 @@ public class MyGrid extends Button {
 				this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
 			}
 			DeminFrame.getDeminFrame().decreaseMineNum();
+			MineRegionCache.removeMarkGridPos(this);
 			break;
 		case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
 			if(image == null){
@@ -225,6 +230,7 @@ public class MyGrid extends Button {
 				image = null;
 				this.imageUpdate(null, 1, 0, 0, 0, 0);
 			}
+			MineRegionCache.removeMarkGridPos(this);
 			break;
 		}
 		refresh();
@@ -243,6 +249,10 @@ public class MyGrid extends Button {
 			this.setState(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE);
 			this.setLabel(mineNum.toString());
 			this.setBackground(new Color(255, 255, 255));
+			
+			Integer closeCount = DeminFrame.getDeminFrame().getCloseGridCount();
+			if(closeCount == 0)
+				DeminFrame.getDeminFrame().gameOver(true);
 			
 			if(LayoutConstants.MODEL_AUTO == Constants.MODEL_SEMI_AUTO_TEXT || LayoutConstants.MODEL_AUTO == Constants.MODEL_AUTO_TEXT){
 				int markCount = getMarkCount();
@@ -438,7 +448,7 @@ public class MyGrid extends Button {
 	 * 根据相邻块推导并标记或打开块
 	 */
 	public boolean markOrOpenGridDeduceByNearGrid(){
-		if(GridStateConstants.GRID_STATE_CLOSE == state)
+		if(GridStateConstants.GRID_STATE_CLOSE == state || GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == state)
 			return false;
 		
 		//与格子周围打开不是雷的块中比较,标记雷或打开不是雷的格子
@@ -504,6 +514,13 @@ public class MyGrid extends Button {
 						}
 						isChange = true;
 					}
+					else if(selfUnsureCount > 0){//如果不等,则这块区域中selfUnsureCount个雷
+						MineRegionCache.putRegion(intersectionGrids, selfUnsureCount);
+					}
+					else{
+						MineRegionCache.putRegion(intersectionGrids, selfUnsureCount);
+					}
+					
 					//如果
 					if(selfUnsureCount == unsureCount && !otherExcludeSelfGrids.isEmpty()){
 						for (MyGrid myGrid : otherExcludeSelfGrids) {
@@ -519,6 +536,13 @@ public class MyGrid extends Button {
 						}
 						isChange = true;
 					}
+					else if(unsureCount > 0){//如果不等,则这块区域中unsureCount个雷
+						MineRegionCache.putRegion(intersectionGrids, unsureCount);
+					}
+					else{
+						MineRegionCache.putRegion(intersectionGrids, unsureCount);
+					}
+					
 					if(unsureCount == selfUnsureCount && !selfExcludeOtherGrids.isEmpty()){
 						for (MyGrid myGrid : selfExcludeOtherGrids) {
 							myGrid.autoMarkOpen();
