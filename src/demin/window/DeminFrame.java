@@ -131,6 +131,8 @@ public class DeminFrame extends Frame {
 	}
 	
 	public void switchAutoModel(){
+		if(!LayoutConstants.IS_AUTO_MODEL)
+			LayoutConstants.IS_AUTO_MODEL = true;
 		List<MyGrid> canFullOpenGrids = new ArrayList<MyGrid>();
 		List<MyGrid> allGrids = new ArrayList<MyGrid>();
 		allGrids.addAll(grids.values());
@@ -158,25 +160,27 @@ public class DeminFrame extends Frame {
 						needReFind = true;
 				}
 				
-				//检查地雷区域,如果有区域大小等于区域中地雷数量的区域,则区域内都是地雷
-				for(Entry<String, Integer> entry : MineRegionCache.getRegions().entrySet()){
-					String region = entry.getKey();
-					Integer mineNum = entry.getValue();
-					System.out.println(region + "   " + mineNum);
-					String[] gridPoss = region.split(",");
-					if(gridPoss.length == mineNum){
-						for (String pos : gridPoss) {
-							MyGrid grid = getGridByPos(Integer.parseInt(pos));
-							grid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				if(!needReFind){
+					//检查地雷区域,如果有区域大小等于区域中地雷数量的区域,则区域内都是地雷
+					for(Entry<String, Integer> entry : MineRegionCache.getRegions().entrySet()){
+						String region = entry.getKey();
+						Integer mineNum = entry.getValue();
+						System.out.println(region + "   " + mineNum);
+						String[] gridPoss = region.split(",");
+						if(gridPoss.length == mineNum){
+							for (String pos : gridPoss) {
+								MyGrid grid = getGridByPos(Integer.parseInt(pos));
+								grid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+							}
+							needReFind = true;
 						}
-						needReFind = true;
-					}
-					else if(mineNum <= 0){
-						for (String pos : gridPoss) {
-							MyGrid grid = getGridByPos(Integer.parseInt(pos));
-							grid.open();
+						else if(mineNum <= 0){
+							for (String pos : gridPoss) {
+								MyGrid grid = getGridByPos(Integer.parseInt(pos));
+								grid.autoMarkOpen();
+							}
+							needReFind = true;
 						}
-						needReFind = true;
 					}
 				}
 				
@@ -187,7 +191,7 @@ public class DeminFrame extends Frame {
 						int totalCloseGridCount = allGrids.size();
 						int rand = (int) (Math.random() * totalCloseGridCount);
 						MyGrid grid = allGrids.get(rand);
-						grid.open();
+						grid.autoMarkOpen();
 						this.increaseStepCount();
 					}
 					break;
@@ -197,7 +201,7 @@ public class DeminFrame extends Frame {
 			if(!canFullOpenGrids.isEmpty()){
 				for(int index = canFullOpenGrids.size() - 1; index >= 0; index --){
 					MyGrid grid = canFullOpenGrids.remove(index);
-					grid.open();
+					grid.autoMarkOpen();
 				}
 			}
 		}
@@ -219,6 +223,8 @@ public class DeminFrame extends Frame {
 				myGrid.open();
 			}
 		}
+		
+		LayoutConstants.IS_AUTO_MODEL = false;
 	}
 	
 	public void refreshFrame(){

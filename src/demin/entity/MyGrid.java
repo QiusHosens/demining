@@ -189,46 +189,50 @@ public class MyGrid extends Button {
 	}
 
 	public int getState() {
-		return state;
+		synchronized(this){
+			return state;
+		}
 	}
 	
 	public void setState(int state) {
-		if(this.state == state)
-			return;
-		this.state = state;
-		DeminFrame.getDeminFrame().decreseCloseCount();
-		switch (state) {
-		case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
-			if(image == null){
-				image = GridStateConstants.GRID_IMAGE_MARK_MINE;
-				image.flush();
-				this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
-			}else{
-				image = GridStateConstants.GRID_IMAGE_MARK_MINE;
-				image.flush();
-				this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
+		synchronized(this){
+			if(this.state == state)
+				return;
+			this.state = state;
+			DeminFrame.getDeminFrame().decreseCloseCount();
+			switch (state) {
+			case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
+				if(image == null){
+					image = GridStateConstants.GRID_IMAGE_MARK_MINE;
+					image.flush();
+					this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
+				}else{
+					image = GridStateConstants.GRID_IMAGE_MARK_MINE;
+					image.flush();
+					this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
+				}
+				DeminFrame.getDeminFrame().decreaseMineNum();
+				MineRegionCache.removeMarkGridPos(this);
+				break;
+			case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
+				if(image == null){
+					image = GridStateConstants.GRID_IMAGE_IS_MINE;
+					this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
+				}else{
+					image = GridStateConstants.GRID_IMAGE_IS_MINE;
+					this.imageUpdate(GridStateConstants.GRID_IMAGE_IS_MINE, 32, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
+				}
+				break;
+			default:
+				if(image != null){
+					image = null;
+					this.imageUpdate(null, 1, 0, 0, 0, 0);
+				}
+				MineRegionCache.removeMarkGridPos(this);
+				break;
 			}
-			DeminFrame.getDeminFrame().decreaseMineNum();
-			MineRegionCache.removeMarkGridPos(this);
-			break;
-		case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
-			if(image == null){
-				image = GridStateConstants.GRID_IMAGE_IS_MINE;
-				this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
-			}else{
-				image = GridStateConstants.GRID_IMAGE_IS_MINE;
-				this.imageUpdate(GridStateConstants.GRID_IMAGE_IS_MINE, 32, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
-			}
-			break;
-		default:
-			if(image != null){
-				image = null;
-				this.imageUpdate(null, 1, 0, 0, 0, 0);
-			}
-			MineRegionCache.removeMarkGridPos(this);
-			break;
+			refresh();
 		}
-		refresh();
 	}
 	
 	/**
@@ -261,7 +265,7 @@ public class MyGrid extends Button {
 						autoMarkOpen();
 					else if(markCount == mineNum)
 						mutiOpen();
-					else
+					else if(!LayoutConstants.IS_AUTO_MODEL)
 						DeminFrame.getDeminFrame().switchAutoModel();
 				}
 			}
