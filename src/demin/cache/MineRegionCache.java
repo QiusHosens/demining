@@ -16,6 +16,7 @@ public class MineRegionCache {
 	
 	public static void putRegion(List<MyGrid> grids, Integer mineNum){
 		if(grids != null && !grids.isEmpty()){
+			grids.sort((g1, g2) -> g1.getPos() > g2.getPos() ? - 1 : 1);
 			StringBuilder sb = new StringBuilder();
 			int index = 0;
 			for (MyGrid myGrid : grids) {
