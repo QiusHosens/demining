@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import demin.constants.GridStateConstants;
 import demin.entity.MyGrid;
 
 public class MineRegionCache {
@@ -48,10 +49,10 @@ public class MineRegionCache {
 	}
 	
 	/**
-	 * 移除已标记为地雷的块
+	 * 移除已标记为地雷或打开的块
 	 * @param grid
 	 */
-	public static void removeMarkGridPos(MyGrid grid){
+	public static void removeConfirmGridPos(MyGrid grid){
 		String pos = String.valueOf(grid.getPos());
 		List<String> removeKeys = new ArrayList<String>();
 		Map<String, Integer> addRegions = new HashMap<String, Integer>();
@@ -73,8 +74,12 @@ public class MineRegionCache {
 					index ++;
 				}
 				
-				if(!"".equals(poss))
-					addRegions.put(poss, --mineNum);
+				if(!"".equals(poss)){
+					if(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState())
+						addRegions.put(poss, --mineNum);
+					else if(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE == grid.getState())
+						addRegions.put(poss, mineNum);
+				}
 			}
 		}
 		

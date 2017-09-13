@@ -174,12 +174,15 @@ public class DeminFrame extends Frame {
 							}
 							needReFind = true;
 						}
-						else if(mineNum <= 0){
+						else if(mineNum == 0){
 							for (String pos : gridPoss) {
 								MyGrid grid = getGridByPos(Integer.parseInt(pos));
 								grid.autoMarkOpen();
 							}
 							needReFind = true;
+						}
+						else if(mineNum < 0){
+							System.out.println("异常");
 						}
 					}
 				}
@@ -187,7 +190,7 @@ public class DeminFrame extends Frame {
 				if(!needReFind){
 					this.refreshFrame();
 					
-					if(LayoutConstants.AUTO_RANDOM_OPEN){
+					if(LayoutConstants.AUTO_RANDOM_OPEN){//是否随机开启
 						int totalCloseGridCount = allGrids.size();
 						int rand = (int) (Math.random() * totalCloseGridCount);
 						MyGrid grid = allGrids.get(rand);
