@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import demin.constants.GridStateConstants;
 import demin.entity.MyGrid;
 
 public class MineRegionCache {
@@ -49,10 +48,10 @@ public class MineRegionCache {
 	}
 	
 	/**
-	 * 移除已标记为地雷或打开的块
+	 * 移除已标记为地雷的块
 	 * @param grid
 	 */
-	public static void removeConfirmGridPos(MyGrid grid){
+	public static Map<String, Integer> removeMarkGridPosFromRegion(Map<String, Integer> region, MyGrid grid){
 		String pos = String.valueOf(grid.getPos());
 		List<String> removeKeys = new ArrayList<String>();
 		Map<String, Integer> addRegions = new HashMap<String, Integer>();
@@ -75,10 +74,123 @@ public class MineRegionCache {
 				}
 				
 				if(!"".equals(poss)){
-					if(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState())
-						addRegions.put(poss, --mineNum);
-					else if(GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE == grid.getState())
-						addRegions.put(poss, mineNum);
+					addRegions.put(poss, --mineNum);
+				}
+			}
+		}
+		
+		for(String key : removeKeys)
+			region.remove(key);
+		
+		region.putAll(addRegions);
+		return region;
+	}
+	
+	/**
+	 * 移除已标记为地雷的块
+	 * @param grid
+	 */
+	public static void removeMarkGridPos(MyGrid grid){
+		String pos = String.valueOf(grid.getPos());
+		List<String> removeKeys = new ArrayList<String>();
+		Map<String, Integer> addRegions = new HashMap<String, Integer>();
+		for (Entry<String, Integer> entry : mineRegions.entrySet()) {
+			String poss = entry.getKey();
+			Integer mineNum = entry.getValue();
+			List<String> posList = new ArrayList<String>();
+			posList.addAll(Arrays.asList(poss.split(",")));
+			if(posList.contains(pos)){
+				removeKeys.add(poss);
+				posList.remove(pos);
+				int index = 0;
+				poss = "";
+				for (String string : posList) {
+					if(index == 0)
+						poss += string;
+					else
+						poss += "," + string;
+					index ++;
+				}
+				
+				if(!"".equals(poss)){
+					addRegions.put(poss, --mineNum);
+				}
+			}
+		}
+		
+		for(String key : removeKeys)
+			mineRegions.remove(key);
+		
+		mineRegions.putAll(addRegions);
+	}
+	
+	/**
+	 * 移除已标记为打开的块
+	 * @param grid
+	 */
+	public static Map<String, Integer> removeOpenGridPosFromRegion(Map<String, Integer> region, MyGrid grid){
+		String pos = String.valueOf(grid.getPos());
+		List<String> removeKeys = new ArrayList<String>();
+		Map<String, Integer> addRegions = new HashMap<String, Integer>();
+		for (Entry<String, Integer> entry : mineRegions.entrySet()) {
+			String poss = entry.getKey();
+			Integer mineNum = entry.getValue();
+			List<String> posList = new ArrayList<String>();
+			posList.addAll(Arrays.asList(poss.split(",")));
+			if(posList.contains(pos)){
+				removeKeys.add(poss);
+				posList.remove(pos);
+				int index = 0;
+				poss = "";
+				for (String string : posList) {
+					if(index == 0)
+						poss += string;
+					else
+						poss += "," + string;
+					index ++;
+				}
+				
+				if(!"".equals(poss)){
+					addRegions.put(poss, mineNum);
+				}
+			}
+		}
+		
+		for(String key : removeKeys)
+			region.remove(key);
+		
+		region.putAll(addRegions);
+		return region;
+	}
+	
+	/**
+	 * 移除已标记为打开的块
+	 * @param grid
+	 */
+	public static void removeOpenGridPos(MyGrid grid){
+		String pos = String.valueOf(grid.getPos());
+		List<String> removeKeys = new ArrayList<String>();
+		Map<String, Integer> addRegions = new HashMap<String, Integer>();
+		for (Entry<String, Integer> entry : mineRegions.entrySet()) {
+			String poss = entry.getKey();
+			Integer mineNum = entry.getValue();
+			List<String> posList = new ArrayList<String>();
+			posList.addAll(Arrays.asList(poss.split(",")));
+			if(posList.contains(pos)){
+				removeKeys.add(poss);
+				posList.remove(pos);
+				int index = 0;
+				poss = "";
+				for (String string : posList) {
+					if(index == 0)
+						poss += string;
+					else
+						poss += "," + string;
+					index ++;
+				}
+				
+				if(!"".equals(poss)){
+					addRegions.put(poss, mineNum);
 				}
 			}
 		}

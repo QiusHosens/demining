@@ -212,7 +212,7 @@ public class MyGrid extends Button {
 					this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
 				}
 				DeminFrame.getDeminFrame().decreaseMineNum();
-				MineRegionCache.removeConfirmGridPos(this);
+				MineRegionCache.removeMarkGridPos(this);
 				break;
 			case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
 				if(image == null){
@@ -228,7 +228,7 @@ public class MyGrid extends Button {
 					image = null;
 					this.imageUpdate(null, 1, 0, 0, 0, 0);
 				}
-				MineRegionCache.removeConfirmGridPos(this);
+				MineRegionCache.removeOpenGridPos(this);
 				break;
 			}
 			refresh();
