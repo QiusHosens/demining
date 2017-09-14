@@ -28,6 +28,7 @@ import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
 import demin.entity.MyGrid;
 import demin.entity.Probability;
+import demin.entity.Strategy;
 import demin.listener.MainWindowListener;
 import demin.listener.MineMouseListener;
 import demin.listener.ModelMouseListener;
@@ -288,9 +289,15 @@ public class DeminFrame extends Frame {
 			Map<String, Integer> cloneRegion = new HashMap<String, Integer>();
 			cloneRegion.putAll(regions);
 			int pos = prob.getPos();
-			Double isNotMineProbability = calculateProbability(cloneRegion, pos, 1d);
+			Double isNotMineProbability = calculateProbability(cloneRegion, pos, LayoutConstants.LEFT_MINE, this.closeCount, 1d);
 			Probability probability3 = new Probability(pos, isNotMineProbability);
 			isNotMineProbabilityList.add(probability3);
+		}
+		
+		//找出所有区域的可能是雷的情况
+		Strategy strategy = null;
+		for(Entry<String, Integer> entry : cloneRegions.entrySet()){
+			
 		}
 		
 		return isChange;
@@ -300,12 +307,13 @@ public class DeminFrame extends Frame {
 	 * 递归计算概率
 	 * @return
 	 */
-	public Double calculateProbability(Map<String, Integer> region, int pos, Double probability){
-		if(region.isEmpty()){
-			return probability;
+	public Double calculateProbability(Map<String, Integer> region, int pos, int leftMineNum, int closeGridNum, Double probability){
+		if(!MineRegionCache.hasGrid(region, this.grids.get(pos))){
+			
+			return probability ;
 		}else{
 			
-			return calculateProbability(region, pos, probability);
+			return calculateProbability(region, pos, leftMineNum, closeGridNum, probability);
 		}
 	}
 	

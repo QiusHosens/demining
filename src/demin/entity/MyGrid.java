@@ -12,6 +12,7 @@ import demin.cache.MineRegionCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
+import demin.util.CollectionUtil;
 import demin.window.DeminFrame;
 
 public class MyGrid extends Button {
@@ -196,7 +197,10 @@ public class MyGrid extends Button {
 		if(this.state == state)
 			return;
 		this.state = state;
-		DeminFrame.getDeminFrame().decreseCloseCount();
+		if(GridStateConstants.GRID_STATE_OPEN_IS_MINE != state){
+			DeminFrame.getDeminFrame().decreseCloseCount();
+			DeminFrame.getDeminFrame().removeGridFromClose(pos);
+		}
 		switch (state) {
 		case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
 			if(image == null){
@@ -480,9 +484,9 @@ public class MyGrid extends Button {
 			int markCount = grid.getMarkCount();
 			int unsureCount = grid.getMineNum() - markCount;
 			List<MyGrid> closeGrids = grid.getUnOpenNotMarkGrids();
-			List<MyGrid> selfExcludeOtherGrids = exclude(selfCloseGrids, closeGrids);
-			List<MyGrid> otherExcludeSelfGrids = exclude(closeGrids, selfCloseGrids);
-			List<MyGrid> intersectionGrids = intersection(selfCloseGrids, closeGrids);
+			List<MyGrid> selfExcludeOtherGrids = CollectionUtil.exclude(selfCloseGrids, closeGrids);
+			List<MyGrid> otherExcludeSelfGrids = CollectionUtil.exclude(closeGrids, selfCloseGrids);
+			List<MyGrid> intersectionGrids = CollectionUtil.intersection(selfCloseGrids, closeGrids);
 			
 			//如果自身不确定地雷数量减去其他块不确定地雷数量大于等于自身排除其他后的块数量,则排除后的块都是地雷
 			if(selfExcludeOtherGrids.size() > 0 && selfUnsureCount - unsureCount == selfExcludeOtherGrids.size() && selfUnsureCount - unsureCount == 1){
@@ -550,48 +554,6 @@ public class MyGrid extends Button {
 			}
 		}
 		return isChange;
-	}
-	
-	/**
-	 * 补集,即{x|x in source && x not in target}
-	 * @param source
-	 * @param target
-	 * @return
-	 */
-	public List<MyGrid> exclude(List<MyGrid> source, List<MyGrid> target){
-		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
-		sourceClone.addAll(source);
-		
-		sourceClone.removeIf(grid -> target.contains(grid));
-		return sourceClone;
-	}
-	
-	/**
-	 * 交集,即{x|x in source && x in target}
-	 * @param source
-	 * @param target
-	 * @return
-	 */
-	public List<MyGrid> intersection(List<MyGrid> source, List<MyGrid> target){
-		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
-		sourceClone.addAll(source);
-		
-		sourceClone.removeIf(grid -> !target.contains(grid));
-		return sourceClone;
-	}
-	
-	/**
-	 * 并集,即{x|x in source || x in target}
-	 * @param source
-	 * @param target
-	 * @return
-	 */
-	public List<MyGrid> union(List<MyGrid> source, List<MyGrid> target){
-		List<MyGrid> sourceClone = new ArrayList<MyGrid>();
-		sourceClone.addAll(source);
-		
-		sourceClone.addAll(exclude(target, source));
-		return sourceClone;
 	}
 	
 	/**

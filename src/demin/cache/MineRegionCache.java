@@ -199,6 +199,19 @@ public class MineRegionCache {
 		mineRegions.putAll(addRegions);
 	}
 	
+	public static boolean hasGrid(Map<String, Integer> region, MyGrid grid){
+		String pos = String.valueOf(grid.getPos());
+		for(Entry<String, Integer> entry : region.entrySet()){
+			String poss = entry.getKey();
+			List<String> posList = new ArrayList<String>();
+			posList.addAll(Arrays.asList(poss.split(",")));
+			if(posList.contains(pos)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public static void clear(){
 		mineRegions.clear();
 	}
