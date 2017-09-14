@@ -26,6 +26,16 @@ public class GridStateConstants {
 	public static final int GRID_STATE_OPEN_IS_MINE = 3;
 	
 	/**
+	 * 模拟标记为雷
+	 */
+	public static final int GRID_STATE_VIRTUAL_MARK_MINE = 4;
+	
+	/**
+	 * 模拟打开不是雷
+	 */
+	public static final int GRID_STATE_VIRTUAL_OPEN_ISNOT_MINE = 5;
+	
+	/**
 	 * 标记雷图标
 	 */
 	public static final Image GRID_IMAGE_MARK_MINE = Toolkit.getDefaultToolkit().getImage(GridStateConstants.class.getResource("hongqi.png"));

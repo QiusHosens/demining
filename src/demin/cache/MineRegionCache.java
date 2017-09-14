@@ -6,13 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
 import demin.entity.MyGrid;
 
 public class MineRegionCache {
 	
-	private static Map<String, Integer> mineRegions = new ConcurrentHashMap<>();
+	private static Map<String, Integer> mineRegions = new HashMap<>();
 	
 	public static void putRegion(List<MyGrid> grids, Integer mineNum){
 		if(grids != null && !grids.isEmpty()){

@@ -1,21 +1,18 @@
 package demin.cache;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import demin.entity.MyGrid;
+import demin.entity.Strategy;
 
 public class StrategyDeduceCache {
 	
-	public static Queue<Map<String, List<MyGrid>>> strategyDeduce = new ConcurrentLinkedQueue<>();
+	public static List<Strategy> strategyDeduce = new ArrayList<>();
 	
-	public static void add(Map<String, List<MyGrid>> strategy){
+	public static void add(Strategy strategy){
 		strategyDeduce.add(strategy);
 	}
 	
-	public static Queue<Map<String, List<MyGrid>>> get(){
+	public static List<Strategy> get(){
 		return strategyDeduce;
 	}
 	

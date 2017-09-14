@@ -21,13 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import demin.cache.MineRegionCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
 import demin.entity.MyGrid;
+import demin.entity.Probability;
 import demin.listener.MainWindowListener;
 import demin.listener.MineMouseListener;
 import demin.listener.ModelMouseListener;
@@ -55,15 +55,13 @@ public class DeminFrame extends Frame {
 	
 	private Label stepCount;
 	
-	private ReentrantReadWriteLock stepLock = new ReentrantReadWriteLock();
-	
 	private Label leftMines;
-	
-	private ReentrantReadWriteLock mineLock = new ReentrantReadWriteLock();
 	
 	private Integer closeCount;
 	
 	private Label closeCountLabel;
+	
+	private Map<Integer, MyGrid> closeGrids;
 	
 	public DeminFrame(){
 		initParams();
@@ -162,6 +160,7 @@ public class DeminFrame extends Frame {
 				
 				if(!needReFind){
 					//检查地雷区域,如果有区域大小等于区域中地雷数量的区域,则区域内都是地雷
+					System.out.println("regions:");
 					for(Entry<String, Integer> entry : MineRegionCache.getRegions().entrySet()){
 						String region = entry.getKey();
 						Integer mineNum = entry.getValue();
@@ -184,6 +183,12 @@ public class DeminFrame extends Frame {
 						else if(mineNum < 0){
 							System.out.println("异常");
 						}
+					}
+				}
+				
+				if(!needReFind){
+					if(this.strategyDeduce()){
+						needReFind = true;
 					}
 				}
 				
@@ -228,6 +233,80 @@ public class DeminFrame extends Frame {
 		}
 		
 		LayoutConstants.IS_AUTO_MODEL = false;
+	}
+	
+	public boolean strategyDeduce(){
+		Map<String, Integer> regions = MineRegionCache.getRegions();
+		Map<String, Integer> cloneRegions = new HashMap<String, Integer>();
+		cloneRegions.putAll(regions);
+		
+		//先推导排除
+		Integer regionMineNum = 0;//雷区总雷数
+		for(Entry<String, Integer> entry : cloneRegions.entrySet())
+			regionMineNum += entry.getValue();
+		
+		//寻找共有点,并算出其是雷的概率
+		Map<Integer, Double> gridProbability = new HashMap<>();
+		Map<Integer, Double> commonGridProbability = new HashMap<>();
+		List<Probability> gridProbabilityList = new ArrayList<>();
+		List<Probability> commonGridProbabilityList = new ArrayList<>();
+		Probability probability = null;
+		for(Entry<String, Integer> entry : cloneRegions.entrySet()){
+			String grids = entry.getKey();
+			Integer mineNum = entry.getValue();
+			String[] gridArr = grids.split(",");
+			Integer len = gridArr.length;
+			for (String gridPos : gridArr) {
+				Integer pos = Integer.parseInt(gridPos);
+				if(!gridProbability.containsKey(pos)){//第一次出现
+					Double isMineProbability = (double) mineNum / len;//计算是雷的概率
+					gridProbability.put(pos, isMineProbability);
+					probability = new Probability(pos, isMineProbability);
+					gridProbabilityList.add(probability);
+				}
+				else{//重复出现
+					Double isMineProbability = gridProbability.get(pos);
+					isMineProbability *= (double) mineNum / len;//计算是雷的概率
+					gridProbability.put(pos, isMineProbability);
+					commonGridProbability.put(pos, isMineProbability);
+					probability = new Probability(pos, isMineProbability);
+					commonGridProbabilityList.add(probability);
+				}
+			}
+		}
+		
+		gridProbabilityList.sort((p1, p2) -> p2.getProbability().compareTo(p1.getProbability()));
+		System.out.println("probability:");
+		for(Probability prob : gridProbabilityList){
+			System.out.println(prob.getPos() + " " + prob.getProbability());
+		}
+		
+		boolean isChange = false;
+		
+		List<Probability> isNotMineProbabilityList = new ArrayList<>();
+		for(Probability prob : gridProbabilityList){
+			Map<String, Integer> cloneRegion = new HashMap<String, Integer>();
+			cloneRegion.putAll(regions);
+			int pos = prob.getPos();
+			Double isNotMineProbability = calculateProbability(cloneRegion, pos, 1d);
+			Probability probability3 = new Probability(pos, isNotMineProbability);
+			isNotMineProbabilityList.add(probability3);
+		}
+		
+		return isChange;
+	}
+	
+	/**
+	 * 递归计算概率
+	 * @return
+	 */
+	public Double calculateProbability(Map<String, Integer> region, int pos, Double probability){
+		if(region.isEmpty()){
+			return probability;
+		}else{
+			
+			return calculateProbability(region, pos, probability);
+		}
 	}
 	
 	public void refreshFrame(){
@@ -399,6 +478,9 @@ public class DeminFrame extends Frame {
 		System.out.println(mines);
 		if(grids == null || grids.isEmpty())
 			grids = new HashMap<Integer, MyGrid>();
+		if(closeGrids == null || closeGrids.isEmpty())
+			closeGrids = new HashMap<Integer, MyGrid>();
+		
 		for(int x = 0; x < LayoutConstants.MODEL_ROW; x ++){
 			for (int y = 0; y < LayoutConstants.MODEL_COLUMN; y ++){
 				MyGrid grid = new MyGrid();
@@ -458,6 +540,7 @@ public class DeminFrame extends Frame {
 				grids.put(curr, grid);
 			}
 		}
+		closeGrids.putAll(grids);
 		
 		//绑定周围格子
 		for(int x = 0; x < LayoutConstants.MODEL_ROW; x ++){
@@ -579,17 +662,13 @@ public class DeminFrame extends Frame {
 	}
 	
 	public void decreaseMineNum(){
-		mineLock.writeLock().lock();
 		LayoutConstants.LEFT_MINE --;
 		leftMines.setText(LayoutConstants.LEFT_MINE.toString());
-		mineLock.writeLock().unlock();
 	}
 	
 	public void increaseStepCount(){
-		stepLock.writeLock().lock();
 		LayoutConstants.STEP_COUNT ++;
 		stepCount.setText(LayoutConstants.STEP_COUNT.toString());
-		stepLock.writeLock().unlock();
 	}
 	
 	private List<Integer> generateMines(int totalNum, int mineNum){
@@ -674,6 +753,14 @@ public class DeminFrame extends Frame {
 	
 	public MyGrid getGridByPos(Integer pos){
 		return this.grids.get(pos);
+	}
+	
+	public void removeGridFromClose(Integer pos){
+		this.closeGrids.remove(pos);
+	}
+	
+	public Map<Integer, MyGrid> getCloseGrids(){
+		return this.closeGrids;
 	}
 
 }

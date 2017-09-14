@@ -189,50 +189,51 @@ public class MyGrid extends Button {
 	}
 
 	public int getState() {
-		synchronized(this){
-			return state;
-		}
+		return state;
 	}
 	
 	public void setState(int state) {
-		synchronized(this){
-			if(this.state == state)
-				return;
-			this.state = state;
-			DeminFrame.getDeminFrame().decreseCloseCount();
-			switch (state) {
-			case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
-				if(image == null){
-					image = GridStateConstants.GRID_IMAGE_MARK_MINE;
-					image.flush();
-					this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
-				}else{
-					image = GridStateConstants.GRID_IMAGE_MARK_MINE;
-					image.flush();
-					this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
-				}
-				DeminFrame.getDeminFrame().decreaseMineNum();
-				MineRegionCache.removeMarkGridPos(this);
-				break;
-			case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
-				if(image == null){
-					image = GridStateConstants.GRID_IMAGE_IS_MINE;
-					this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
-				}else{
-					image = GridStateConstants.GRID_IMAGE_IS_MINE;
-					this.imageUpdate(GridStateConstants.GRID_IMAGE_IS_MINE, 32, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
-				}
-				break;
-			default:
-				if(image != null){
-					image = null;
-					this.imageUpdate(null, 1, 0, 0, 0, 0);
-				}
-				MineRegionCache.removeOpenGridPos(this);
-				break;
+		if(this.state == state)
+			return;
+		this.state = state;
+		DeminFrame.getDeminFrame().decreseCloseCount();
+		switch (state) {
+		case GridStateConstants.GRID_STATE_CLOSE_MARK_MINE:
+			if(image == null){
+				image = GridStateConstants.GRID_IMAGE_MARK_MINE;
+				image.flush();
+				this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
+			}else{
+				image = GridStateConstants.GRID_IMAGE_MARK_MINE;
+				image.flush();
+				this.imageUpdate(GridStateConstants.GRID_IMAGE_MARK_MINE, 16, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
 			}
-			refresh();
+			DeminFrame.getDeminFrame().decreaseMineNum();
+			MineRegionCache.removeMarkGridPos(this);
+			break;
+		case GridStateConstants.GRID_STATE_OPEN_IS_MINE:
+			if(image == null){
+				image = GridStateConstants.GRID_IMAGE_IS_MINE;
+				this.prepareImage(image, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6, null);
+			}else{
+				image = GridStateConstants.GRID_IMAGE_IS_MINE;
+				this.imageUpdate(GridStateConstants.GRID_IMAGE_IS_MINE, 32, 3, 3, Constants.SINGLE_WIDTH - 6, Constants.SINGLE_HEIGHT - 6);
+			}
+			break;
+		case GridStateConstants.GRID_STATE_OPEN_ISNOT_MINE:
+			if(image != null){
+				image = null;
+				this.imageUpdate(null, 1, 0, 0, 0, 0);
+			}
+			MineRegionCache.removeOpenGridPos(this);
+		default:
+			if(image != null){
+				image = null;
+				this.imageUpdate(null, 1, 0, 0, 0, 0);
+			}
+			break;
 		}
+		refresh();
 	}
 	
 	/**
@@ -464,6 +465,11 @@ public class MyGrid extends Button {
 		
 		if(grids.isEmpty())
 			return false;
+		
+		int selfMarkCount1 = getMarkCount();//标记为雷的格子数量
+		int selfUnsureCount1 = mineNum - selfMarkCount1;//周围不确定地雷的数量
+		List<MyGrid> selfCloseGrids1 = getUnOpenNotMarkGrids();
+		MineRegionCache.putRegion(selfCloseGrids1, selfUnsureCount1);
 		
 		boolean isChange = false;
 		for (MyGrid grid : grids) {
