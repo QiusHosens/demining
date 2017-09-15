@@ -16,6 +16,7 @@ import java.awt.MenuBar;
 import java.awt.MenuItem;
 import java.awt.Panel;
 import java.awt.Toolkit;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,13 +25,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 
 import demin.cache.MineRegionCache;
 import demin.cache.StrategyDeduceCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
+import demin.entity.MiddleValue;
 import demin.entity.MyGrid;
+import demin.entity.Probability;
 import demin.entity.Strategy;
 import demin.listener.MainWindowListener;
 import demin.listener.MineMouseListener;
@@ -97,6 +101,7 @@ public class DeminFrame extends Frame {
 		LayoutConstants.GAME_IS_OVER = false;
 		this.closeCount = LayoutConstants.MODEL_TOTAL;
 		MineRegionCache.clear();
+		StrategyDeduceCache.clear();
 		removeAll();
 		
 		LayoutConstants.FRAME_WIDTH = LayoutConstants.MODEL_ROW * Constants.SINGLE_WIDTH + 20;
@@ -192,13 +197,8 @@ public class DeminFrame extends Frame {
 				}
 				
 				if(!needReFind){
-					if(this.strategyDeduce()){
-						needReFind = true;
-					}
-				}
-				
-				if(!needReFind){
 					this.refreshFrame();
+					this.strategyDeduce();
 					
 					if(LayoutConstants.AUTO_RANDOM_OPEN){//是否随机开启
 						int totalCloseGridCount = allGrids.size();
@@ -246,100 +246,97 @@ public class DeminFrame extends Frame {
 
 		boolean isChange = false;
 		
+		Set<String> posList = new HashSet<>();
 		//找出所有区域的可能是雷的情况
 		for(Entry<String, Integer> entry : cloneRegions.entrySet()){
 			String grids = entry.getKey();
 			String[] gridArr = grids.split(",");
 			for (String gridPos : gridArr) {
+				posList.add(gridPos);
 				Integer pos = Integer.parseInt(gridPos);
 				//克隆雷区
 				Map<String, Integer> cloneRegion = new HashMap<String, Integer>(regions);
 				//假设当前块是雷
-				boolean needResetMine = false;
-				Map<String, Integer> needResetRegion = null;
 				List<Integer> resetMines = new ArrayList<Integer>();
 				resetMines.add(pos);
 				//全局变量
 				StringBuilder allPoss = new StringBuilder();
 				int allCloseGridNum = this.closeCount;
 				int allRegionMineNum = 0;
-				while(!cloneRegion.isEmpty()){
-					List<Integer> cloneResetMines = new ArrayList<Integer>(resetMines);
-					for(Integer minePos : cloneResetMines){
-						StringBuilder poss = new StringBuilder(allPoss);
-						int closeGridNum = allCloseGridNum;
-						int regionMineNum = allRegionMineNum;
-						pos = minePos;
-						while(!needResetMine){
-							cloneRegion = MineRegionCache.removeMarkGridPosFromRegion(cloneRegion, this.grids.get(pos));
-							poss.append(",").append(pos);
-							closeGridNum --;
-							regionMineNum ++;
-							if(regionMineNum > LayoutConstants.LEFT_MINE)//如果区域内假设雷数量多于剩余雷数,则策略失败
-								break;
-							
-							Set<Integer> canOpenGridPos = new HashSet<Integer>();
-							String[] gridsArr;
-							List<String> gridsPosList;
-							//去除不是雷的块
-							for(Entry<String, Integer> entry1 : cloneRegion.entrySet()){
-								String gridsPoss = entry1.getKey();
-								Integer mineNum = entry1.getValue();
-								gridsArr = gridsPoss.split(",");
-								gridsPosList = Arrays.asList(gridsArr);
-								if(mineNum == 0){
-									for(String gridPos1 : gridsPosList){
-										Integer gridPosInt = Integer.parseInt(gridPos1);
-										canOpenGridPos.add(gridPosInt);
-									}
+				MiddleValue value = new MiddleValue(pos, allPoss, allCloseGridNum, allRegionMineNum, cloneRegion);
+				Stack<MiddleValue> resetMinesListStack = new Stack<>();
+				resetMinesListStack.push(value);
+				while(!resetMinesListStack.isEmpty()){
+					MiddleValue useValue = resetMinesListStack.pop();
+					Map<String, Integer> region = useValue.getRegion();
+					StringBuilder poss = useValue.getGridPos();
+					int closeGridNum = useValue.getCloseGridNum();
+					int regionMineNum = useValue.getRegionMineNum();
+					pos = useValue.getCurrPos();
+					while(true){
+						region = MineRegionCache.removeMarkGridPosFromRegion(region, this.grids.get(pos));
+						poss.append(",").append(pos);
+						closeGridNum --;
+						regionMineNum ++;
+						if(regionMineNum > LayoutConstants.LEFT_MINE)//如果区域内假设雷数量多于剩余雷数,则策略失败
+							break;
+						
+						Set<Integer> canOpenGridPos = new HashSet<Integer>();
+						String[] gridsArr;
+						List<String> gridsPosList;
+						//去除不是雷的块
+						for(Entry<String, Integer> entry1 : region.entrySet()){
+							String gridsPoss = entry1.getKey();
+							Integer mineNum = entry1.getValue();
+							gridsArr = gridsPoss.split(",");
+							gridsPosList = Arrays.asList(gridsArr);
+							if(mineNum == 0){
+								for(String gridPos1 : gridsPosList){
+									Integer gridPosInt = Integer.parseInt(gridPos1);
+									canOpenGridPos.add(gridPosInt);
 								}
-							}
-							
-							for(Integer gridPos1 : canOpenGridPos){
-								cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, this.grids.get(gridPos1));
-								closeGridNum --;
-							}
-							
-							if(cloneRegion.isEmpty()){
-								Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
-								StrategyDeduceCache.add(strategy);
-								needResetRegion = new HashMap<>(cloneRegion);
-								break;
-							}
-							
-							//找确定是雷的块
-							boolean isFind = false;
-							for(Entry<String, Integer> entry1 : cloneRegion.entrySet()){
-								String gridsPoss = entry1.getKey();
-								Integer mineNum = entry1.getValue();
-								gridsArr = gridsPoss.split(",");
-								gridsPosList = Arrays.asList(gridsArr);
-								if(mineNum == gridsPosList.size()){
-									isFind = true;
-									for(String gridPos1 : gridsPosList){
-										Integer gridPosInt = Integer.parseInt(gridPos1);
-										pos = gridPosInt;
-										isFind = true;
-									}
-								}
-							}
-							if(!isFind){
-								needResetRegion = new HashMap<>(cloneRegion);
-								break;
 							}
 						}
-						if(needResetRegion != null && !needResetRegion.isEmpty()){
-							resetMines.clear();
-							allPoss = new StringBuilder(poss);
-							allCloseGridNum = closeGridNum;
-							allRegionMineNum = regionMineNum;
-							for(Entry<String, Integer> entry1 : cloneRegion.entrySet()){
-								String gridPoss = entry1.getKey();
-								String[] gridPossList = gridPoss.split(",");
-								for(String gridPos1 : gridPossList){
+						
+						for(Integer gridPos1 : canOpenGridPos){
+							region = MineRegionCache.removeOpenGridPosFromRegion(region, this.grids.get(gridPos1));
+							closeGridNum --;
+						}
+						
+						if(region.isEmpty()){
+							Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
+							StrategyDeduceCache.add(strategy);
+							break;
+						}
+						
+						//找确定是雷的块
+						boolean isFind = false;
+						for(Entry<String, Integer> entry1 : region.entrySet()){
+							String gridsPoss = entry1.getKey();
+							Integer mineNum = entry1.getValue();
+							gridsArr = gridsPoss.split(",");
+							gridsPosList = Arrays.asList(gridsArr);
+							if(mineNum == gridsPosList.size()){
+								isFind = true;
+								for(String gridPos1 : gridsPosList){
 									Integer gridPosInt = Integer.parseInt(gridPos1);
-									resetMines.add(gridPosInt);
+									pos = gridPosInt;
+									isFind = true;
 								}
+							}
+						}
+						if(!isFind){
+							break;
+						}
+					}
+					if(region != null && !region.isEmpty()){
+						for(Entry<String, Integer> entry1 : region.entrySet()){
+							String gridPoss = entry1.getKey();
+							String[] gridPossList = gridPoss.split(",");
+							for(String gridPos1 : gridPossList){
+								Integer gridPosInt = Integer.parseInt(gridPos1);
+								MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(region));
+								resetMinesListStack.push(setValue);
 							}
 						}
 					}
@@ -353,83 +350,33 @@ public class DeminFrame extends Frame {
 			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
 		}
 		
+		//计算各点是雷的概率
+		List<Probability> probabilityList = new ArrayList<>();
+		//总的可能情况数量
+		BigDecimal totalPosibleNum = new BigDecimal(0);
+		for (Strategy strategy : strategyList) {
+			totalPosibleNum = totalPosibleNum.add(strategy.getProbability());
+		}
+		for(String pos : posList){
+			BigDecimal gridPosibleNum = new BigDecimal(0);
+			for (Strategy strategy : strategyList) {
+				String gridPos = strategy.getGrids();
+				List<String> gridPosList = Arrays.asList(gridPos.split(","));
+				if(gridPosList.contains(pos))
+					gridPosibleNum = gridPosibleNum.add(strategy.getProbability());
+			}
+			Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, 10, 0));
+			probabilityList.add(gridProbability);
+		}
+		
+		probabilityList.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
+		
+		System.out.println("probability:");
+		for (Probability probability : probabilityList) {
+			System.out.println(probability.getPos() + " " + probability.getProbability());
+		}
+		
 		return isChange;
-	}
-	
-	/**
-	 * 递归生成策略
-	 * @param region 雷区
-	 * @param pos 雷的位置
-	 * @param poss 策略中雷的位置
-	 * @param closeGridNum 关闭块的数量
-	 * @param regionMineNum 策略中雷的数量
-	 * @return
-	 */
-	public void generateStrategy(Map<String, Integer> region, int pos, StringBuilder poss, int closeGridNum, int regionMineNum){
-		if(region.isEmpty()){
-			Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
-			StrategyDeduceCache.add(strategy);
-		}
-		else{
-			region = MineRegionCache.removeMarkGridPosFromRegion(region, this.grids.get(pos));
-			poss.append(",").append(pos);
-			closeGridNum --;
-			regionMineNum ++;
-			
-			Set<Integer> canOpenGridPos = new HashSet<Integer>();
-			String[] gridsArr;
-			List<String> gridsPosList;
-			//去除不是雷的块
-			for(Entry<String, Integer> entry : region.entrySet()){
-				String gridsPoss = entry.getKey();
-				Integer mineNum = entry.getValue();
-				gridsArr = gridsPoss.split(",");
-				gridsPosList = Arrays.asList(gridsArr);
-				if(mineNum == 0){
-					for(String gridPos : gridsPosList){
-						Integer gridPosInt = Integer.parseInt(gridPos);
-						canOpenGridPos.add(gridPosInt);
-					}
-				}
-			}
-			for(Integer gridPos : canOpenGridPos){
-				region = MineRegionCache.removeOpenGridPosFromRegion(region, this.grids.get(gridPos));
-				closeGridNum --;
-			}
-			
-			if(region.isEmpty()){
-				Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
-				StrategyDeduceCache.add(strategy);
-			}
-			
-			//找确定是雷的块
-			boolean isFind = false;
-			for(Entry<String, Integer> entry : region.entrySet()){
-				String gridsPoss = entry.getKey();
-				Integer mineNum = entry.getValue();
-				gridsArr = gridsPoss.split(",");
-				gridsPosList = Arrays.asList(gridsArr);
-				if(mineNum == gridsPosList.size()){
-					isFind = true;
-					for(String gridPos : gridsPosList){
-						Integer gridPosInt = Integer.parseInt(gridPos);
-						generateStrategy(region, gridPosInt, poss, closeGridNum, regionMineNum);
-					}
-				}
-			}
-			if(!isFind){
-				//如果没找到可以确定是雷的块,就再假设一块是雷
-				for(Entry<String, Integer> entry : region.entrySet()){
-					String gridsPoss = entry.getKey();
-					gridsArr = gridsPoss.split(",");
-					gridsPosList = Arrays.asList(gridsArr);
-					for(String gridPos : gridsPosList){
-						Integer gridPosInt = Integer.parseInt(gridPos);
-						generateStrategy(region, gridPosInt, poss, closeGridNum, regionMineNum);
-					}
-				}
-			}
-		}
 	}
 	
 	public void refreshFrame(){

@@ -1,12 +1,14 @@
 package demin.entity;
 
+import java.math.BigDecimal;
+
 public class Probability {
 
 	private Integer pos;
 	
-	private Double probability;
+	private BigDecimal probability;
 	
-	public Probability(Integer pos, Double probability){
+	public Probability(Integer pos, BigDecimal probability){
 		this.pos = pos;
 		this.probability = probability;
 	}
@@ -19,11 +21,11 @@ public class Probability {
 		this.pos = pos;
 	}
 
-	public Double getProbability() {
+	public BigDecimal getProbability() {
 		return probability;
 	}
 
-	public void setProbability(Double probability) {
+	public void setProbability(BigDecimal probability) {
 		this.probability = probability;
 	}
 	
