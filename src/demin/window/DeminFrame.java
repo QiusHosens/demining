@@ -343,7 +343,6 @@ public class DeminFrame extends Frame {
 							}
 						}
 					}
-					cloneRegion = new HashMap<String, Integer>(needResetRegion);
 				}
 			}
 		}
