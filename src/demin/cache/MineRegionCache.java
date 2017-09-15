@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import demin.entity.MyGrid;
+import demin.util.CollectionUtil;
 
 public class MineRegionCache {
 	
@@ -16,16 +17,43 @@ public class MineRegionCache {
 		if(grids != null && !grids.isEmpty()){
 			grids.sort((g1, g2) -> g1.getPos() > g2.getPos() ? 1 : -1);
 			StringBuilder sb = new StringBuilder();
+			List<String> currPosList = new ArrayList<>();
 			int index = 0;
 			for (MyGrid myGrid : grids) {
+				currPosList.add(String.valueOf(myGrid.getPos()));
 				if(index == 0)
 					sb.append(myGrid.getPos());
 				else
 					sb.append(",").append(myGrid.getPos());
 				index ++;
 			}
-			if(!mineRegions.containsKey(sb.toString()))
-				mineRegions.put(sb.toString(), mineNum);
+			if(!mineRegions.containsKey(sb.toString())){
+				//查找是否有与之存在包含关系的区
+				List<String> removeKeys = new ArrayList<String>();
+				Map<String, Integer> addRegions = new HashMap<String, Integer>();
+				for(Entry<String, Integer> entry : mineRegions.entrySet()){
+					String poss = entry.getKey();
+					List<String> posList = new ArrayList<>(Arrays.asList(poss.split(",")));
+					
+					List<String> selfExcludeOther = CollectionUtil.exclude(currPosList, posList);
+					List<String> otherExcludeSelf = CollectionUtil.exclude(posList, currPosList);
+					if(selfExcludeOther.isEmpty()){//如果自身包含在其他的里面,则移除其他的,在加上其他对自身的补集
+						removeKeys.add(poss);
+						addRegions.put(CollectionUtil.listToString(otherExcludeSelf, ","), entry.getValue() - mineNum);
+					}
+					else if(otherExcludeSelf.isEmpty()){
+						addRegions.put(CollectionUtil.listToString(selfExcludeOther, ","), mineNum - entry.getValue());
+					}
+				}
+				
+				if(!addRegions.isEmpty()){
+					for (String key : removeKeys)
+						mineRegions.remove(key);
+					mineRegions.putAll(addRegions);
+				}
+				else
+					mineRegions.put(sb.toString(), mineNum);
+			}
 		}
 	}
 	
@@ -53,7 +81,7 @@ public class MineRegionCache {
 		String pos = String.valueOf(grid.getPos());
 		List<String> removeKeys = new ArrayList<String>();
 		Map<String, Integer> addRegions = new HashMap<String, Integer>();
-		for (Entry<String, Integer> entry : mineRegions.entrySet()) {
+		for (Entry<String, Integer> entry : region.entrySet()) {
 			String poss = entry.getKey();
 			Integer mineNum = entry.getValue();
 			List<String> posList = new ArrayList<String>();
@@ -130,7 +158,7 @@ public class MineRegionCache {
 		String pos = String.valueOf(grid.getPos());
 		List<String> removeKeys = new ArrayList<String>();
 		Map<String, Integer> addRegions = new HashMap<String, Integer>();
-		for (Entry<String, Integer> entry : mineRegions.entrySet()) {
+		for (Entry<String, Integer> entry : region.entrySet()) {
 			String poss = entry.getKey();
 			Integer mineNum = entry.getValue();
 			List<String> posList = new ArrayList<String>();

@@ -4,13 +4,13 @@ public class Strategy {
 	
 	private String grids;
 	
-	private Double probability;
+	private Integer possible;
 	
 	private Integer mineNum;
 
-	public Strategy(String grids, Double probability, Integer mineNum){
+	public Strategy(String grids, Integer possible, Integer mineNum){
 		this.grids = grids;
-		this.probability = probability;
+		this.possible = possible;
 		this.mineNum = mineNum;
 	}
 	
@@ -22,12 +22,12 @@ public class Strategy {
 		this.grids = grids;
 	}
 
-	public Double getProbability() {
-		return probability;
+	public Integer getProbability() {
+		return possible;
 	}
 
-	public void setProbability(Double probability) {
-		this.probability = probability;
+	public void setProbability(Integer possible) {
+		this.possible = possible;
 	}
 
 	public Integer getMineNum() {
