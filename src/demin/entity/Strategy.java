@@ -1,14 +1,16 @@
 package demin.entity;
 
+import java.math.BigDecimal;
+
 public class Strategy {
 	
 	private String grids;
 	
-	private Integer possible;
+	private BigDecimal possible;
 	
 	private Integer mineNum;
 
-	public Strategy(String grids, Integer possible, Integer mineNum){
+	public Strategy(String grids, BigDecimal possible, Integer mineNum){
 		this.grids = grids;
 		this.possible = possible;
 		this.mineNum = mineNum;
@@ -22,11 +24,11 @@ public class Strategy {
 		this.grids = grids;
 	}
 
-	public Integer getProbability() {
+	public BigDecimal getProbability() {
 		return possible;
 	}
 
-	public void setProbability(Integer possible) {
+	public void setProbability(BigDecimal possible) {
 		this.possible = possible;
 	}
 

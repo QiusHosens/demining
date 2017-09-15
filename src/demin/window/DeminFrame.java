@@ -191,11 +191,11 @@ public class DeminFrame extends Frame {
 					}
 				}
 				
-//				if(!needReFind){
-//					if(this.strategyDeduce()){
-//						needReFind = true;
-//					}
-//				}
+				if(!needReFind){
+					if(this.strategyDeduce()){
+						needReFind = true;
+					}
+				}
 				
 				if(!needReFind){
 					this.refreshFrame();
@@ -275,6 +275,8 @@ public class DeminFrame extends Frame {
 							poss.append(",").append(pos);
 							closeGridNum --;
 							regionMineNum ++;
+							if(regionMineNum > LayoutConstants.LEFT_MINE)//如果区域内假设雷数量多于剩余雷数,则策略失败
+								break;
 							
 							Set<Integer> canOpenGridPos = new HashSet<Integer>();
 							String[] gridsArr;

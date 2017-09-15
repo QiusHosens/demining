@@ -1,5 +1,6 @@
 package demin.util;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,17 +53,19 @@ public class CollectionUtil {
 	 * @param n
 	 * @param m
 	 */
-	public static int combination(int n, int m){
+	public static BigDecimal combination(int n, int m){
 		if(m > n / 2)
 			return combination(n, n - m);
 		else{
-			int denom = 1;//分母
-			int mole = 1;//分子
+			BigDecimal denom = new BigDecimal(1);//分母
+			BigDecimal mole = new BigDecimal(1);//分子
 			for(int i = 0; i < m; i ++){
-				mole *= n - i;
-				denom *= m - i;
+				mole = mole.multiply(new BigDecimal(n - i)); 
+				denom = denom.multiply(new BigDecimal(m - i));
 			}
-			return mole / denom;
+			if(denom.equals(0))
+				System.out.println("错误:n:" + n + " m:" + m + " denom:" + denom + " mole:" + mole);
+			return mole.divide(denom);
 		}
 	}
 	
