@@ -107,4 +107,6 @@ public class Constants {
 	 */
 	public static final Integer SINGLE_HEIGHT = 20;
 	
+	public static final Integer THREAD_COUNT = 10;
+	
 }

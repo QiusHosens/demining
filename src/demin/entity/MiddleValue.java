@@ -1,6 +1,7 @@
 package demin.entity;
 
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class MiddleValue {
 	
@@ -14,12 +15,23 @@ public class MiddleValue {
 	
 	private Map<String, Integer> region;
 	
-	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region){
+	private CountDownLatch latch;
+	
+	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region, CountDownLatch latch){
 		this.currPos = currPos;
 		this.gridPos = gridPos;
 		this.closeGridNum = closeGridNum;
 		this.regionMineNum = regionMineNum;
 		this.region = region;
+		this.latch = latch;
+	}
+
+	public CountDownLatch getLatch() {
+		return latch;
+	}
+
+	public void setLatch(CountDownLatch latch) {
+		this.latch = latch;
 	}
 
 	public Integer getCurrPos() {

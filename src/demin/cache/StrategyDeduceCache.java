@@ -3,12 +3,15 @@ package demin.cache;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import demin.entity.Strategy;
 import demin.util.CollectionUtil;
 
 public class StrategyDeduceCache {
 	
-	public static List<Strategy> strategyDeduce = new ArrayList<>();
+	public static Queue<Strategy> strategyDeduce = new ConcurrentLinkedQueue<>();
 	
 	public static void add(Strategy strategy){
 		String gridPos = strategy.getGrids();
@@ -25,7 +28,7 @@ public class StrategyDeduceCache {
 			strategyDeduce.add(strategy);
 	}
 	
-	public static List<Strategy> get(){
+	public static Queue<Strategy> get(){
 		return strategyDeduce;
 	}
 	
