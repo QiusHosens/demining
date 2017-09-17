@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JLabel;
 
 import demin.cache.MineRegionCache;
+import demin.cache.ProbabilityCache;
 import demin.cache.StrategyDeduceCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
@@ -107,8 +108,10 @@ public class DeminFrame extends Frame {
 		LayoutConstants.STEP_COUNT = 0;
 		LayoutConstants.GAME_IS_OVER = false;
 		this.closeCount = LayoutConstants.MODEL_TOTAL;
-		MineRegionCache.clearAllRegion();;
+		MineRegionCache.clearAllRegion();
+		MineRegionCache.clearNewRegion();
 		StrategyDeduceCache.clear();
+		ProbabilityCache.clear();
 		removeAll();
 		if(tip != null && tipLabel != null)
 			tipLabel.setText("");
@@ -183,7 +186,6 @@ public class DeminFrame extends Frame {
 				if(!needReFind){
 					//检查地雷区域,如果有区域大小等于区域中地雷数量的区域,则区域内都是地雷
 					System.out.println("regions:");
-					MineRegionCache.setAllRegions(MineRegionCache.mergeRegion(MineRegionCache.getAllRegions(), MineRegionCache.getNewRegions()));
 					for(Entry<String, Integer> entry : MineRegionCache.getAllRegions().entrySet()){
 						String region = entry.getKey();
 						Integer mineNum = entry.getValue();
@@ -311,7 +313,7 @@ public class DeminFrame extends Frame {
 			int regionMineNum = useValue.getRegionMineNum();
 			int pos = useValue.getCurrPos();
 			while(true){
-//				System.out.println(count ++);
+				System.out.println(count ++);
 				region = MineRegionCache.removeMarkGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(pos));
 				poss.append(",").append(pos);
 				closeGridNum --;
@@ -420,6 +422,8 @@ public class DeminFrame extends Frame {
 				probabilityList.add(gridProbability);
 			}
 			
+			ProbabilityCache.addAll(probabilityList);
+			probabilityList = ProbabilityCache.get();
 			probabilityList.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
 			
 			StringBuilder sb = new StringBuilder();

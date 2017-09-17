@@ -473,7 +473,8 @@ public class MyGrid extends Button {
 		int selfMarkCount1 = getMarkCount();//标记为雷的格子数量
 		int selfUnsureCount1 = mineNum - selfMarkCount1;//周围不确定地雷的数量
 		List<MyGrid> selfCloseGrids1 = getUnOpenNotMarkGrids();
-		MineRegionCache.putRegion(selfCloseGrids1, selfUnsureCount1);
+		MineRegionCache.putNewRegion(selfCloseGrids1, selfUnsureCount1);
+		MineRegionCache.putAllRegion(selfCloseGrids1, selfUnsureCount1);
 		
 		boolean isChange = false;
 		for (MyGrid grid : grids) {
@@ -493,7 +494,8 @@ public class MyGrid extends Button {
 				for (MyGrid myGrid : selfExcludeOtherGrids) {
 					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 				}
-				MineRegionCache.putRegion(intersectionGrids, selfUnsureCount - unsureCount);
+				MineRegionCache.putNewRegion(intersectionGrids, selfUnsureCount - unsureCount);
+				MineRegionCache.putAllRegion(intersectionGrids, selfUnsureCount - unsureCount);
 				//如果不确定地雷差值等于排除后的地雷数,并且不确定地雷数为1,则其他块不是地雷
 				for (MyGrid myGrid : otherExcludeSelfGrids) {
 					myGrid.autoMarkOpen();
@@ -504,7 +506,8 @@ public class MyGrid extends Button {
 				for (MyGrid myGrid : otherExcludeSelfGrids) {
 					myGrid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 				}
-				MineRegionCache.putRegion(intersectionGrids, unsureCount - selfUnsureCount);
+				MineRegionCache.putNewRegion(intersectionGrids, unsureCount - selfUnsureCount);
+				MineRegionCache.putAllRegion(intersectionGrids, unsureCount - selfUnsureCount);
 				
 				for (MyGrid myGrid : selfExcludeOtherGrids) {
 					myGrid.autoMarkOpen();
@@ -522,7 +525,8 @@ public class MyGrid extends Button {
 						isChange = true;
 					}
 					else if(selfUnsureCount > 0){//如果不等,则这块区域中selfUnsureCount个雷
-						MineRegionCache.putRegion(intersectionGrids, selfUnsureCount);
+						MineRegionCache.putNewRegion(intersectionGrids, selfUnsureCount);
+						MineRegionCache.putAllRegion(intersectionGrids, selfUnsureCount);
 					}
 					
 					//如果
@@ -541,7 +545,8 @@ public class MyGrid extends Button {
 						isChange = true;
 					}
 					else if(unsureCount > 0){//如果不等,则这块区域中unsureCount个雷
-						MineRegionCache.putRegion(intersectionGrids, unsureCount);
+						MineRegionCache.putNewRegion(intersectionGrids, unsureCount);
+						MineRegionCache.putAllRegion(intersectionGrids, unsureCount);
 					}
 					
 					if(unsureCount == selfUnsureCount && !selfExcludeOtherGrids.isEmpty()){
