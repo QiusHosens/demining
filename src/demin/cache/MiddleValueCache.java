@@ -1,20 +1,19 @@
 package demin.cache;
 
 import java.util.Queue;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import demin.entity.MiddleValue;
 
 public class MiddleValueCache {
 
-	private static Queue<Stack<MiddleValue>> middleValueCache = new ConcurrentLinkedQueue<>();
+	private static Queue<MiddleValue> middleValueCache = new ConcurrentLinkedQueue<>();
 	
-	public static void add(Stack<MiddleValue> middleValue){
+	public static void add(MiddleValue middleValue){
 		middleValueCache.add(middleValue);
 	}
 	
-	public static Stack<MiddleValue> poll(){
+	public static MiddleValue poll(){
 		return middleValueCache.poll();
 	}
 	

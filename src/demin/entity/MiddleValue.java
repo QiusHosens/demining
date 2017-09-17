@@ -17,6 +17,14 @@ public class MiddleValue {
 	
 	private CountDownLatch latch;
 	
+	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region){
+		this.currPos = currPos;
+		this.gridPos = gridPos;
+		this.closeGridNum = closeGridNum;
+		this.regionMineNum = regionMineNum;
+		this.region = region;
+	}
+	
 	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region, CountDownLatch latch){
 		this.currPos = currPos;
 		this.gridPos = gridPos;

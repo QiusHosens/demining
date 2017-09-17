@@ -107,6 +107,29 @@ public class Constants {
 	 */
 	public static final Integer SINGLE_HEIGHT = 20;
 	
-	public static final Integer THREAD_COUNT = 10;
+	/**
+	 * 策略生成器线程数量
+	 */
+	public static final Integer INIT_THREAD_COUNT = 10;
+	
+	/**
+	 * 增加线程条件
+	 */
+	public static final Integer ADD_THREAD_PER_NUM = 100;
+	
+	/**
+	 * 最大线程数量
+	 */
+	public static final Integer MAX_THREAD_COUNT = 1000;
+	
+	/**
+	 * 使用策略的条件--剩余雷数量
+	 */
+	public static final Integer USE_STRATEGY_LEFT_MINE_NUM = 100;
+	
+	/**
+	 * 使用策略的条件--剩余关闭块数量
+	 */
+	public static final Integer USE_STRATEGY_CLOSE_GRID_NUM = 300;
 	
 }

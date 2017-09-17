@@ -27,9 +27,9 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.JLabel;
 
-import demin.cache.MiddleValueCache;
 import demin.cache.MineRegionCache;
 import demin.cache.StrategyDeduceCache;
 import demin.constants.Constants;
@@ -44,7 +44,7 @@ import demin.listener.MineMouseListener;
 import demin.listener.ModelMouseListener;
 import demin.listener.OKMouseListener;
 import demin.listener.RestartActionListener;
-import demin.thread.StrategyGenerator;
+import demin.util.CollectionUtil;
 
 public class DeminFrame extends Frame {
 
@@ -64,6 +64,10 @@ public class DeminFrame extends Frame {
 	private Map<Integer, MyGrid> grids;
 	
 	private Dialog dialog;
+	
+	private Dialog tip;
+	
+	private JLabel tipLabel;
 	
 	private Label stepCount;
 	
@@ -103,9 +107,11 @@ public class DeminFrame extends Frame {
 		LayoutConstants.STEP_COUNT = 0;
 		LayoutConstants.GAME_IS_OVER = false;
 		this.closeCount = LayoutConstants.MODEL_TOTAL;
-		MineRegionCache.clear();
+		MineRegionCache.clearAllRegion();;
 		StrategyDeduceCache.clear();
 		removeAll();
+		if(tip != null && tipLabel != null)
+			tipLabel.setText("");
 		
 		LayoutConstants.FRAME_WIDTH = LayoutConstants.MODEL_ROW * Constants.SINGLE_WIDTH + 20;
 		LayoutConstants.FRAME_HEIGHT = LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT + 120;
@@ -147,6 +153,9 @@ public class DeminFrame extends Frame {
 		List<MyGrid> canFullOpenGrids = new ArrayList<MyGrid>();
 		List<MyGrid> allGrids = new ArrayList<MyGrid>();
 		allGrids.addAll(grids.values());
+		if(MineRegionCache.isCanClearNewRegion()){
+			MineRegionCache.clearNewRegion();
+		}
 		
 		while(allGrids != null && !allGrids.isEmpty()){
 			//先移除已经完全打开的块和已标识为雷的块
@@ -174,7 +183,8 @@ public class DeminFrame extends Frame {
 				if(!needReFind){
 					//检查地雷区域,如果有区域大小等于区域中地雷数量的区域,则区域内都是地雷
 					System.out.println("regions:");
-					for(Entry<String, Integer> entry : MineRegionCache.getRegions().entrySet()){
+					MineRegionCache.setAllRegions(MineRegionCache.mergeRegion(MineRegionCache.getAllRegions(), MineRegionCache.getNewRegions()));
+					for(Entry<String, Integer> entry : MineRegionCache.getAllRegions().entrySet()){
 						String region = entry.getKey();
 						Integer mineNum = entry.getValue();
 						System.out.println(region + "   " + mineNum);
@@ -201,7 +211,17 @@ public class DeminFrame extends Frame {
 				
 				if(!needReFind){
 					this.refreshFrame();
-					this.strategyDeduce();
+//					if((LayoutConstants.LEFT_MINE <= Constants.USE_STRATEGY_LEFT_MINE_NUM || this.closeCount <= Constants.USE_STRATEGY_CLOSE_GRID_NUM) && this.strategyDeduce()){
+//						needReFind = true;
+//					}
+					if(this.strategyDeduce()){
+						needReFind = true;
+					}
+					MineRegionCache.setCanClearNewRegion(true);
+				}
+				
+				if(!needReFind){
+					this.refreshFrame();
 					
 					if(LayoutConstants.AUTO_RANDOM_OPEN){//是否随机开启
 						int totalCloseGridCount = allGrids.size();
@@ -244,45 +264,125 @@ public class DeminFrame extends Frame {
 	}
 	
 	public boolean strategyDeduce(){
-		Map<String, Integer> regions = MineRegionCache.getRegions();
+		Map<String, Integer> allRegions = MineRegionCache.getAllRegions();
+		Map<String, Integer> newRegions = MineRegionCache.getNewRegions();
+		Map<String, Integer> regions = MineRegionCache.getIntersectRegion(allRegions, newRegions);
 		Map<String, Integer> cloneRegions = new HashMap<String, Integer>(regions);
 
 		boolean isChange = false;
 		
+		
+		
 		Set<String> posList = new HashSet<>();
+		Stack<MiddleValue> stack = new Stack<>();
 		//找出所有区域的可能是雷的情况
-		CountDownLatch latch = new CountDownLatch(cloneRegions.size());
+		System.out.println("new region: ");
+		int index = 0;
 		for(Entry<String, Integer> entry : cloneRegions.entrySet()){
 			String grids = entry.getKey();
 			String[] gridArr = grids.split(",");
+			System.out.println(grids + " " + entry.getValue());
 			for (String gridPos : gridArr) {
 				posList.add(gridPos);
-				Integer pos = Integer.parseInt(gridPos);
-				//克隆雷区
-				Map<String, Integer> cloneRegion = new HashMap<String, Integer>(regions);
-				//假设当前块是雷
-				List<Integer> resetMines = new ArrayList<Integer>();
-				resetMines.add(pos);
-				//全局变量
-				StringBuilder allPoss = new StringBuilder();
-				int allCloseGridNum = this.closeCount;
-				int allRegionMineNum = 0;
-				MiddleValue value = new MiddleValue(pos, allPoss, allCloseGridNum, allRegionMineNum, cloneRegion, latch);
-				Stack<MiddleValue> stack = new Stack<>();
-				stack.push(value);
-				MiddleValueCache.add(stack);
+				if(index == 0){
+					Integer pos = Integer.parseInt(gridPos);
+					//克隆雷区
+					Map<String, Integer> cloneRegion = new HashMap<String, Integer>(regions);
+					//假设当前块是雷
+					List<Integer> resetMines = new ArrayList<Integer>();
+					resetMines.add(pos);
+					//全局变量
+					StringBuilder allPoss = new StringBuilder();
+					int allCloseGridNum = this.closeCount;
+					int allRegionMineNum = 0;
+					MiddleValue value = new MiddleValue(pos, allPoss, allCloseGridNum, allRegionMineNum, cloneRegion);
+					stack.push(value);
+				}
 			}
+			index ++;
 		}
-		StrategyGenerator.getStrategyGenerator().execute();
 		
-		try {
-			latch.await();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		int count = 0;
+		while(!stack.isEmpty()){
+			MiddleValue useValue = stack.pop();
+			Map<String, Integer> region = useValue.getRegion();
+			StringBuilder poss = useValue.getGridPos();
+			int closeGridNum = useValue.getCloseGridNum();
+			int regionMineNum = useValue.getRegionMineNum();
+			int pos = useValue.getCurrPos();
+			while(true){
+//				System.out.println(count ++);
+				region = MineRegionCache.removeMarkGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(pos));
+				poss.append(",").append(pos);
+				closeGridNum --;
+				regionMineNum ++;
+				if(regionMineNum > LayoutConstants.LEFT_MINE)//如果区域内假设雷数量多于剩余雷数,则策略失败
+					break;
+				
+				if(!region.isEmpty()){
+					Set<Integer> canOpenGridPos = new HashSet<Integer>();
+					//去除不是雷的块
+					for(Entry<String, Integer> entry1 : region.entrySet()){
+						String gridsPoss = entry1.getKey();
+						Integer mineNum = entry1.getValue();
+						String[] gridsArr = gridsPoss.split(",");
+						List<String> gridsPosList = Arrays.asList(gridsArr);
+						if(mineNum == 0){
+							for(String gridPos1 : gridsPosList){
+								Integer gridPosInt = Integer.parseInt(gridPos1);
+								canOpenGridPos.add(gridPosInt);
+							}
+						}
+					}
+				
+					for(Integer gridPos1 : canOpenGridPos){
+						region = MineRegionCache.removeOpenGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(gridPos1));
+						closeGridNum --;
+					}
+				}
+				
+				if(region.isEmpty()){
+					Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
+					StrategyDeduceCache.add(strategy);
+					break;
+				}
+				
+				//找确定是雷的块
+				boolean isFind = false;
+				for(Entry<String, Integer> entry1 : region.entrySet()){
+					String gridsPoss = entry1.getKey();
+					Integer mineNum = entry1.getValue();
+					String[] gridsArr = gridsPoss.split(",");
+					List<String> gridsPosList = Arrays.asList(gridsArr);
+					if(mineNum == gridsPosList.size()){
+						isFind = true;
+						for(String gridPos1 : gridsPosList){
+							Integer gridPosInt = Integer.parseInt(gridPos1);
+							pos = gridPosInt;
+							isFind = true;
+						}
+					}
+				}
+				if(!isFind){
+					break;
+				}
+			}
+			if(region != null && !region.isEmpty()){
+				for(Entry<String, Integer> entry1 : region.entrySet()){
+					String gridPoss = entry1.getKey();
+					String[] gridPossList = gridPoss.split(",");
+					for(String gridPos1 : gridPossList){
+						Integer gridPosInt = Integer.parseInt(gridPos1);
+						MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(region));
+						stack.push(setValue);
+					}
+					break;
+				}
+			}
 		}
 		
 		Queue<Strategy> strategyList = StrategyDeduceCache.get();
-		System.out.println("strategys:");
+		System.out.println("strategys: " + strategyList.size());
 		for (Strategy strategy : strategyList) {
 			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
 		}
@@ -290,27 +390,63 @@ public class DeminFrame extends Frame {
 		//计算各点是雷的概率
 		List<Probability> probabilityList = new ArrayList<>();
 		//总的可能情况数量
-		BigDecimal totalPosibleNum = new BigDecimal(0);
-		for (Strategy strategy : strategyList) {
-			totalPosibleNum = totalPosibleNum.add(strategy.getProbability());
-		}
-		for(String pos : posList){
-			BigDecimal gridPosibleNum = new BigDecimal(0);
+		if(!strategyList.isEmpty()){
+			BigDecimal totalPosibleNum = new BigDecimal(0);
+			int minPosibleMinNum = 0;//最小可能雷数
 			for (Strategy strategy : strategyList) {
-				String gridPos = strategy.getGrids();
-				List<String> gridPosList = Arrays.asList(gridPos.split(","));
-				if(gridPosList.contains(pos))
-					gridPosibleNum = gridPosibleNum.add(strategy.getProbability());
+				totalPosibleNum = totalPosibleNum.add(strategy.getProbability());
+				if(minPosibleMinNum == 0 || minPosibleMinNum > strategy.getMineNum())
+					minPosibleMinNum = strategy.getMineNum();
 			}
-			Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, 10, 0));
-			probabilityList.add(gridProbability);
-		}
-		
-		probabilityList.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
-		
-		System.out.println("probability:");
-		for (Probability probability : probabilityList) {
-			System.out.println(probability.getPos() + " " + probability.getProbability());
+			
+			if(minPosibleMinNum == LayoutConstants.LEFT_MINE){//如果策略中最小的可能雷数等于剩余的雷数,则雷肯定在雷区中,打开不在雷区中的块
+				for(Entry<Integer, MyGrid> entry : this.getCloseGrids().entrySet()){
+					if(!MineRegionCache.hasGrid(cloneRegions, entry.getValue())){
+						entry.getValue().autoMarkOpen();
+						isChange = true;
+					}
+				}
+			}
+			
+			for(String pos : posList){
+				BigDecimal gridPosibleNum = new BigDecimal(0);
+				for (Strategy strategy : strategyList) {
+					String gridPos = strategy.getGrids();
+					List<String> gridPosList = Arrays.asList(gridPos.split(","));
+					if(gridPosList.contains(pos))
+						gridPosibleNum = gridPosibleNum.add(strategy.getProbability());
+				}
+				Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, 10, 0));
+				probabilityList.add(gridProbability);
+			}
+			
+			probabilityList.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
+			
+			StringBuilder sb = new StringBuilder();
+			int pos, row, column;
+			sb.append("<html>");
+			for (Probability probability : probabilityList) {
+				pos = probability.getPos();
+				if(probability.getProbability().equals(BigDecimal.ZERO)){
+					this.grids.get(pos).autoMarkOpen();
+					isChange = true;
+					break;
+				}
+				if(probability.getProbability().equals(BigDecimal.ONE)){
+					this.grids.get(pos).setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+					isChange = true;
+					break;
+				}
+				row = pos / LayoutConstants.MODEL_ROW + 1;
+				column = pos % LayoutConstants.MODEL_ROW + 1;
+				sb.append("pos: ").append(String.valueOf(pos)).append(" row: ").append(String.valueOf(row)).append(" column: ").append(String.valueOf(column)).append(" probability: ").append(probability.getProbability()).append("<br/>");
+			}
+			sb.append("</html>");
+			
+			tip = getTipDialog(probabilityList.size());
+			tip.setVisible(true);
+			
+			tipLabel.setText(sb.toString());
 		}
 		
 		return isChange;
@@ -486,7 +622,7 @@ public class DeminFrame extends Frame {
 		if(grids == null || grids.isEmpty())
 			grids = new HashMap<Integer, MyGrid>();
 		if(closeGrids == null || closeGrids.isEmpty())
-			closeGrids = new HashMap<Integer, MyGrid>();
+			closeGrids = new ConcurrentHashMap<Integer, MyGrid>();
 		
 		for(int x = 0; x < LayoutConstants.MODEL_ROW; x ++){
 			for (int y = 0; y < LayoutConstants.MODEL_COLUMN; y ++){
@@ -648,6 +784,29 @@ public class DeminFrame extends Frame {
 				GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 		p.add(leftMines, gbc);
 		return p;
+	}
+	
+	public Dialog getTipDialog(int size){
+		if(tip == null)
+			tip = new Dialog(this);
+		tip.setLayout(new GridBagLayout());
+		int dWidth = 400;
+		int dHeight;
+		if(size < 5)
+			dHeight = 50 + 20 * size;
+		else
+			dHeight = 30 + 18 * size;
+		tip.setSize(dWidth, dHeight);
+		tip.setBounds((LayoutConstants.SCREEN_WIDTH + LayoutConstants.FRAME_WIDTH) / 2, 
+				(LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2, dWidth, dHeight);
+		
+		if(tipLabel == null){
+			tipLabel = new JLabel();
+			tipLabel.setName("probability");
+			tip.add(tipLabel);
+		}
+		tipLabel.setBounds(10, 5, dWidth - 5 * 2, dHeight - 10 * 2);
+		return tip;
 	}
 	
 	public void setSingleDifficultyEnable(Checkbox cb){

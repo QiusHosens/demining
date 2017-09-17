@@ -26,6 +26,8 @@ public class LayoutConstants {
 	
 	public static Integer STEP_COUNT;
 	
+	public static Integer CURRENT_THREAD_COUNT;
+	
 	/**
 	 * 游戏是否已经结束
 	 */
