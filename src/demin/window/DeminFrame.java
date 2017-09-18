@@ -283,30 +283,20 @@ public class DeminFrame extends Frame {
 		Stack<MiddleValue> stack = new Stack<>();
 		//找出所有区域的可能是雷的情况
 		System.out.println("new region: ");
-		int index = 0;
 		for(Entry<String, Integer> entry : cloneRegions.entrySet()){
 			String grids = entry.getKey();
 			String[] gridArr = grids.split(",");
 			System.out.println(grids + " " + entry.getValue());
-			Map<String, Integer> cloneRegion = new HashMap<String, Integer>(cloneRegions);
 			for (String gridPos : gridArr) {
 				posList.add(gridPos);
-				if(index == 0){
-					Integer pos = Integer.parseInt(gridPos);
-					//假设当前块是雷
-					List<Integer> resetMines = new ArrayList<Integer>();
-					resetMines.add(pos);
-					//全局变量
-					StringBuilder allPoss = new StringBuilder();
-					int allCloseGridNum = this.closeCount;
-					int allRegionMineNum = 0;
-					MiddleValue value = new MiddleValue(pos, new StringBuilder(allPoss), allCloseGridNum, allRegionMineNum, new HashMap<>(cloneRegion));
-					cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos);
-					stack.push(value);
-				}
 			}
-			index ++;
 		}
+		
+		StringBuilder allPoss = new StringBuilder();
+		int allCloseGridNum = this.closeCount;
+		int allRegionMineNum = 0;
+		MiddleValue value = new MiddleValue(-1, new StringBuilder(allPoss), allCloseGridNum, allRegionMineNum, new HashMap<>(cloneRegions));
+		stack.push(value);
 		
 		int count = 0;
 		int strategy_count = 0;
@@ -317,7 +307,7 @@ public class DeminFrame extends Frame {
 			int closeGridNum = useValue.getCloseGridNum();
 			int regionMineNum = useValue.getRegionMineNum();
 			int pos = useValue.getCurrPos();
-			while(true){
+			while(pos != -1){
 				System.out.println(count ++);
 				region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 				poss.append(",").append(pos);

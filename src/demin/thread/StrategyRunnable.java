@@ -33,8 +33,7 @@ public class StrategyRunnable implements Runnable {
 		int closeGridNum = useValue.getCloseGridNum();
 		int regionMineNum = useValue.getRegionMineNum();
 		int pos = useValue.getCurrPos();
-		while(true){
-//			System.out.println(count ++);
+		while(pos != -1){
 			region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 			poss.append(",").append(pos);
 			closeGridNum --;
@@ -94,13 +93,17 @@ public class StrategyRunnable implements Runnable {
 			for(Entry<String, Integer> entry1 : region.entrySet()){
 				String gridPoss = entry1.getKey();
 				String[] gridPossList = gridPoss.split(",");
+				Map<String, Integer> cloneRegion = new HashMap<String, Integer>(region);
 				for(String gridPos1 : gridPossList){
 					Integer gridPosInt = Integer.parseInt(gridPos1);
-					MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(region));
+					MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion));
 					MiddleValueCache.add(setValue);
+					//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
+					cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
 				}
 				break;
 			}
+			//检查是否需要增加线程
 			StrategyGenerator.getStrategyGenerator().check();
 		}
 	}
