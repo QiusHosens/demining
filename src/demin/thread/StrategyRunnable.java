@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.Map.Entry;
 
 import demin.cache.LatchCache;
@@ -26,9 +27,22 @@ public class StrategyRunnable implements Runnable {
 			if(useValueStack != null)
 				generateStrategy(useValueStack);
 		}
-		if(LatchCache.getCurrLatch().getCount() == 0)
-			LatchCache.setCurrLatch(LatchCache.pop());
-		LatchCache.getCurrLatch().countDown();
+		
+		Map<String, CountDownLatch> latchs = null;
+		while((latchs = LatchCache.getCurrLatch()) != null){
+			CountDownLatch currLatch = latchs.get("currLatch");
+			CountDownLatch preLatch = latchs.get("preLatch");
+			if(preLatch == null)
+				currLatch.countDown();
+			else{
+				try {
+					preLatch.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				currLatch.countDown();
+			}
+		}
 	}
 	
 	private void generateStrategy(MiddleValue useValue){

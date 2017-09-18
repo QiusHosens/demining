@@ -37,7 +37,6 @@ public class StrategyGenerator {
 		LayoutConstants.CURRENT_THREAD_COUNT += num;
 		CountDownLatch latch = new CountDownLatch(num);
 		LatchCache.push(latch);
-		LatchCache.setCurrLatch(latch);
 	}
 	
 	public void check(){

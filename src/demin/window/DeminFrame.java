@@ -34,6 +34,7 @@ import javax.swing.JLabel;
 
 import demin.cache.GameCache;
 import demin.cache.LatchCache;
+import demin.cache.MiddleValueCache;
 import demin.cache.MineRegionCache;
 import demin.cache.ProbabilityCache;
 import demin.cache.StrategyDeduceCache;
@@ -274,6 +275,7 @@ public class DeminFrame extends Frame {
 	
 	public boolean strategyDeduce(){
 		StrategyDeduceCache.clear();
+		LatchCache.clear();
 		Map<String, Integer> allRegions = MineRegionCache.getAllRegions();
 //		Map<String, Integer> newRegions = MineRegionCache.getNewRegions();
 //		Map<String, Integer> regions = MineRegionCache.getIntersectRegion(allRegions, newRegions);
@@ -302,11 +304,11 @@ public class DeminFrame extends Frame {
 		int allCloseGridNum = this.closeCount;
 		int allRegionMineNum = 0;
 		MiddleValue value = new MiddleValue(-1, new StringBuilder(allPoss), allCloseGridNum, allRegionMineNum, new HashMap<>(cloneRegions));
+		MiddleValueCache.add(value);
 		stack.push(value);
 		
 		CountDownLatch latch = new CountDownLatch(Constants.INIT_THREAD_COUNT);
 		LatchCache.push(latch);
-		LatchCache.setCurrLatch(latch);
 		StrategyGenerator.getStrategyGenerator().execute();
 		try {
 			latch.await();
