@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import demin.cache.LatchCache;
 import demin.cache.MiddleValueCache;
 import demin.cache.MineRegionCache;
 import demin.cache.StrategyDeduceCache;
@@ -25,6 +26,9 @@ public class StrategyRunnable implements Runnable {
 			if(useValueStack != null)
 				generateStrategy(useValueStack);
 		}
+		if(LatchCache.getCurrLatch().getCount() == 0)
+			LatchCache.setCurrLatch(LatchCache.pop());
+		LatchCache.getCurrLatch().countDown();
 	}
 	
 	private void generateStrategy(MiddleValue useValue){

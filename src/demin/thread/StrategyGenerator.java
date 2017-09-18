@@ -1,8 +1,10 @@
 package demin.thread;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import demin.cache.LatchCache;
 import demin.cache.MiddleValueCache;
 import demin.constants.Constants;
 import demin.constants.LayoutConstants;
@@ -33,6 +35,9 @@ public class StrategyGenerator {
 			pool.execute(new StrategyRunnable());
 		}
 		LayoutConstants.CURRENT_THREAD_COUNT += num;
+		CountDownLatch latch = new CountDownLatch(num);
+		LatchCache.push(latch);
+		LatchCache.setCurrLatch(latch);
 	}
 	
 	public void check(){

@@ -110,7 +110,7 @@ public class Constants {
 	/**
 	 * 策略生成器线程数量
 	 */
-	public static final Integer INIT_THREAD_COUNT = 10;
+	public static final Integer INIT_THREAD_COUNT = 1;
 	
 	/**
 	 * 增加线程条件
