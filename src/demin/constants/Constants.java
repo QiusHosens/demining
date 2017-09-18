@@ -132,4 +132,9 @@ public class Constants {
 	 */
 	public static final Integer USE_STRATEGY_CLOSE_GRID_NUM = 300;
 	
+	/**
+	 * 概率保留小数点位数
+	 */
+	public static final Integer PROBABILITY_SCALE = 20;
+	
 }

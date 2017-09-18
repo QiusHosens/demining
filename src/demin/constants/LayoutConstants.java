@@ -28,6 +28,8 @@ public class LayoutConstants {
 	
 	public static Integer CURRENT_THREAD_COUNT;
 	
+	public static boolean IS_RELOAD = false;
+	
 	/**
 	 * 游戏是否已经结束
 	 */

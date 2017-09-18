@@ -313,9 +313,6 @@ public class MyGrid extends Button {
 			}
 			this.setFullOpen(true);//已经全部打开
 		}
-		else{
-			this.open();
-		}
 	}
 	
 	/**
@@ -361,9 +358,6 @@ public class MyGrid extends Button {
 				this.getwGrid().open();
 			}
 			this.setFullOpen(true);
-		}
-		else{
-			this.open();
 		}
 	}
 	

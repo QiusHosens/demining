@@ -15,7 +15,6 @@ import demin.constants.LayoutConstants;
 import demin.entity.MiddleValue;
 import demin.entity.Strategy;
 import demin.util.CollectionUtil;
-import demin.window.DeminFrame;
 
 public class StrategyRunnable implements Runnable {
 
@@ -36,7 +35,7 @@ public class StrategyRunnable implements Runnable {
 		int pos = useValue.getCurrPos();
 		while(true){
 //			System.out.println(count ++);
-			region = MineRegionCache.removeMarkGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(pos));
+			region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 			poss.append(",").append(pos);
 			closeGridNum --;
 			regionMineNum ++;
@@ -60,7 +59,7 @@ public class StrategyRunnable implements Runnable {
 				}
 			
 				for(Integer gridPos1 : canOpenGridPos){
-					region = MineRegionCache.removeOpenGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(gridPos1));
+					region = MineRegionCache.removeOpenGridPosFromRegion(region, String.valueOf(gridPos1));
 					closeGridNum --;
 				}
 			}

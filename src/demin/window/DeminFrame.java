@@ -30,6 +30,7 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JLabel;
 
+import demin.cache.GameCache;
 import demin.cache.MineRegionCache;
 import demin.cache.ProbabilityCache;
 import demin.cache.StrategyDeduceCache;
@@ -38,12 +39,14 @@ import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
 import demin.entity.MiddleValue;
 import demin.entity.MyGrid;
+import demin.entity.OneGame;
 import demin.entity.Probability;
 import demin.entity.Strategy;
 import demin.listener.MainWindowListener;
 import demin.listener.MineMouseListener;
 import demin.listener.ModelMouseListener;
 import demin.listener.OKMouseListener;
+import demin.listener.ReloadActionListener;
 import demin.listener.RestartActionListener;
 import demin.util.CollectionUtil;
 
@@ -116,8 +119,8 @@ public class DeminFrame extends Frame {
 		if(tip != null && tipLabel != null)
 			tipLabel.setText("");
 		
-		LayoutConstants.FRAME_WIDTH = LayoutConstants.MODEL_ROW * Constants.SINGLE_WIDTH + 20;
-		LayoutConstants.FRAME_HEIGHT = LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT + 120;
+		LayoutConstants.FRAME_WIDTH = (LayoutConstants.MODEL_ROW + 1) * Constants.SINGLE_WIDTH + 20;
+		LayoutConstants.FRAME_HEIGHT = (LayoutConstants.MODEL_COLUMN + 1) * Constants.SINGLE_HEIGHT + 120;
 		
 		setLayout(new GridBagLayout());
 		setLocation((LayoutConstants.SCREEN_WIDTH - LayoutConstants.FRAME_WIDTH) / 2, 
@@ -266,10 +269,11 @@ public class DeminFrame extends Frame {
 	}
 	
 	public boolean strategyDeduce(){
+		StrategyDeduceCache.clear();
 		Map<String, Integer> allRegions = MineRegionCache.getAllRegions();
-		Map<String, Integer> newRegions = MineRegionCache.getNewRegions();
-		Map<String, Integer> regions = MineRegionCache.getIntersectRegion(allRegions, newRegions);
-		Map<String, Integer> cloneRegions = new HashMap<String, Integer>(regions);
+//		Map<String, Integer> newRegions = MineRegionCache.getNewRegions();
+//		Map<String, Integer> regions = MineRegionCache.getIntersectRegion(allRegions, newRegions);
+		Map<String, Integer> cloneRegions = new HashMap<String, Integer>(allRegions);
 
 		boolean isChange = false;
 		
@@ -284,12 +288,11 @@ public class DeminFrame extends Frame {
 			String grids = entry.getKey();
 			String[] gridArr = grids.split(",");
 			System.out.println(grids + " " + entry.getValue());
+			Map<String, Integer> cloneRegion = new HashMap<String, Integer>(cloneRegions);
 			for (String gridPos : gridArr) {
 				posList.add(gridPos);
 				if(index == 0){
 					Integer pos = Integer.parseInt(gridPos);
-					//克隆雷区
-					Map<String, Integer> cloneRegion = new HashMap<String, Integer>(regions);
 					//假设当前块是雷
 					List<Integer> resetMines = new ArrayList<Integer>();
 					resetMines.add(pos);
@@ -297,7 +300,8 @@ public class DeminFrame extends Frame {
 					StringBuilder allPoss = new StringBuilder();
 					int allCloseGridNum = this.closeCount;
 					int allRegionMineNum = 0;
-					MiddleValue value = new MiddleValue(pos, allPoss, allCloseGridNum, allRegionMineNum, cloneRegion);
+					MiddleValue value = new MiddleValue(pos, new StringBuilder(allPoss), allCloseGridNum, allRegionMineNum, new HashMap<>(cloneRegion));
+					cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos);
 					stack.push(value);
 				}
 			}
@@ -305,6 +309,7 @@ public class DeminFrame extends Frame {
 		}
 		
 		int count = 0;
+		int strategy_count = 0;
 		while(!stack.isEmpty()){
 			MiddleValue useValue = stack.pop();
 			Map<String, Integer> region = useValue.getRegion();
@@ -314,7 +319,7 @@ public class DeminFrame extends Frame {
 			int pos = useValue.getCurrPos();
 			while(true){
 				System.out.println(count ++);
-				region = MineRegionCache.removeMarkGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(pos));
+				region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 				poss.append(",").append(pos);
 				closeGridNum --;
 				regionMineNum ++;
@@ -338,12 +343,13 @@ public class DeminFrame extends Frame {
 					}
 				
 					for(Integer gridPos1 : canOpenGridPos){
-						region = MineRegionCache.removeOpenGridPosFromRegion(region, DeminFrame.getDeminFrame().getGridByPos(gridPos1));
+						region = MineRegionCache.removeOpenGridPosFromRegion(region, String.valueOf(gridPos1));
 						closeGridNum --;
 					}
 				}
 				
 				if(region.isEmpty()){
+					strategy_count ++;
 					Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
 					StrategyDeduceCache.add(strategy);
 					break;
@@ -373,10 +379,13 @@ public class DeminFrame extends Frame {
 				for(Entry<String, Integer> entry1 : region.entrySet()){
 					String gridPoss = entry1.getKey();
 					String[] gridPossList = gridPoss.split(",");
+					Map<String, Integer> cloneRegion = new HashMap<String, Integer>(region);
 					for(String gridPos1 : gridPossList){
 						Integer gridPosInt = Integer.parseInt(gridPos1);
-						MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(region));
+						MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion));
 						stack.push(setValue);
+						//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
+						cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
 					}
 					break;
 				}
@@ -384,7 +393,7 @@ public class DeminFrame extends Frame {
 		}
 		
 		Queue<Strategy> strategyList = StrategyDeduceCache.get();
-		System.out.println("strategys: " + strategyList.size());
+		System.out.println("strategys: " + strategy_count + " " + strategyList.size());
 		for (Strategy strategy : strategyList) {
 			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
 		}
@@ -410,6 +419,21 @@ public class DeminFrame extends Frame {
 				}
 			}
 			
+			//所有区域中的块
+			Set<String> allPos = new HashSet<>();
+			//公共块
+			Set<String> commonPos = new HashSet<>();
+			for(Entry<String, Integer> entry : allRegions.entrySet()){
+				String gridPos = entry.getKey();
+				List<String> gridPosList = Arrays.asList(gridPos.split(","));
+				for (String pos : gridPosList) {
+					if(!allPos.contains(pos))
+						allPos.add(pos);
+					else if(!commonPos.contains(pos))
+						commonPos.add(pos);
+				}
+			}
+			
 			for(String pos : posList){
 				BigDecimal gridPosibleNum = new BigDecimal(0);
 				for (Strategy strategy : strategyList) {
@@ -418,12 +442,12 @@ public class DeminFrame extends Frame {
 					if(gridPosList.contains(pos))
 						gridPosibleNum = gridPosibleNum.add(strategy.getProbability());
 				}
-				Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, 10, 0));
+				Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, Constants.PROBABILITY_SCALE, 0));
 				probabilityList.add(gridProbability);
 			}
 			
-			ProbabilityCache.addAll(probabilityList);
-			probabilityList = ProbabilityCache.get();
+//			ProbabilityCache.addAll(probabilityList);
+//			probabilityList = ProbabilityCache.get();
 			probabilityList.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
 			
 			StringBuilder sb = new StringBuilder();
@@ -431,12 +455,12 @@ public class DeminFrame extends Frame {
 			sb.append("<html>");
 			for (Probability probability : probabilityList) {
 				pos = probability.getPos();
-				if(probability.getProbability().equals(BigDecimal.ZERO)){
+				if(probability.getProbability().compareTo(BigDecimal.ZERO) == 0){
 					this.grids.get(pos).autoMarkOpen();
 					isChange = true;
 					break;
 				}
-				if(probability.getProbability().equals(BigDecimal.ONE)){
+				if(probability.getProbability().compareTo(BigDecimal.ONE) == 0){
 					this.grids.get(pos).setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
 					isChange = true;
 					break;
@@ -481,6 +505,11 @@ public class DeminFrame extends Frame {
 		restartMenuItem.setLabel("Restart");
 		restartMenuItem.addActionListener(new RestartActionListener());
 		mainMenu.add(restartMenuItem);
+		
+		MenuItem resLoadMenuItem = new MenuItem();
+		resLoadMenuItem.setLabel("ReLoad");
+		resLoadMenuItem.addActionListener(new ReloadActionListener());
+		mainMenu.add(resLoadMenuItem);
 		
 		Menu setMenu = new Menu();
 		setMenu.setLabel("Setting");
@@ -618,9 +647,20 @@ public class DeminFrame extends Frame {
 	private Panel getMinePanel(){
 		Panel p = new Panel();
 		p.setLayout(new GridBagLayout());
-		p.setBounds(10, 120, LayoutConstants.FRAME_WIDTH, LayoutConstants.MODEL_COLUMN * Constants.SINGLE_HEIGHT);
+		p.setBounds(10, 120, LayoutConstants.FRAME_WIDTH, (LayoutConstants.MODEL_COLUMN + 1) * Constants.SINGLE_HEIGHT);
 		
-		mines = generateMines(LayoutConstants.MODEL_ROW * LayoutConstants.MODEL_COLUMN, LayoutConstants.MODEL_MINE);
+		if(LayoutConstants.IS_RELOAD){
+			OneGame lastGame = GameCache.removeLastGame();
+			if(lastGame != null){
+				mines = lastGame.getMines();
+				System.out.println("step: " + lastGame.getStep());
+			}
+		}
+		else{
+			mines = generateMines(LayoutConstants.MODEL_ROW * LayoutConstants.MODEL_COLUMN, LayoutConstants.MODEL_MINE);
+		}
+		GameCache.setMines(mines);
+		
 		GridBagConstraints gbc = null;
 		System.out.println(mines);
 		if(grids == null || grids.isEmpty())
@@ -724,14 +764,33 @@ public class DeminFrame extends Frame {
 		}
 		
 		//将格子放到面板上
-		for(int x = 0; x < LayoutConstants.MODEL_ROW; x ++){
-			for (int y = 0; y < LayoutConstants.MODEL_COLUMN; y ++){
-				Integer pos = y * LayoutConstants.MODEL_ROW + x;
-				MyGrid grid = grids.get(pos);
-				gbc = new GridBagConstraints(x * Constants.SINGLE_WIDTH + 10, y * Constants.SINGLE_HEIGHT, Constants.SINGLE_WIDTH, Constants.SINGLE_HEIGHT, 0, 0, GridBagConstraints.CENTER, 
-						GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-				grid.setVisible(true);
-				p.add(grid, gbc);
+		for(int x = 0; x <= LayoutConstants.MODEL_ROW; x ++){
+			for (int y = 0; y <= LayoutConstants.MODEL_COLUMN; y ++){
+				if(x == 0 || y == 0){
+					Button button = new Button();
+					button.setPreferredSize(new Dimension(Constants.SINGLE_WIDTH, Constants.SINGLE_HEIGHT));
+					button.setBounds(x * Constants.SINGLE_WIDTH + 10, y * Constants.SINGLE_HEIGHT, Constants.SINGLE_WIDTH, Constants.SINGLE_HEIGHT);
+					button.setEnabled(false);
+					if(x == 0 && y == 0){
+						button.setLabel("c\\r");
+					}else if(x == 0){
+						button.setLabel(String.valueOf(y));
+					}else if(y == 0){
+						button.setLabel(String.valueOf(x));
+					}
+					gbc = new GridBagConstraints(x * Constants.SINGLE_WIDTH + 10, y * Constants.SINGLE_HEIGHT, Constants.SINGLE_WIDTH, Constants.SINGLE_HEIGHT, 0, 0, GridBagConstraints.CENTER, 
+							GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+					button.setVisible(true);
+					p.add(button, gbc);
+				}
+				else{
+					Integer pos = (y - 1) * LayoutConstants.MODEL_ROW + x - 1;
+					MyGrid grid = grids.get(pos);
+					gbc = new GridBagConstraints(x * Constants.SINGLE_WIDTH + 10, y * Constants.SINGLE_HEIGHT, Constants.SINGLE_WIDTH, Constants.SINGLE_HEIGHT, 0, 0, GridBagConstraints.CENTER, 
+							GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+					grid.setVisible(true);
+					p.add(grid, gbc);
+				}
 			}
 		}
 		
@@ -794,7 +853,7 @@ public class DeminFrame extends Frame {
 		if(tip == null)
 			tip = new Dialog(this);
 		tip.setLayout(new GridBagLayout());
-		int dWidth = 400;
+		int dWidth = 300 + 10 * Constants.PROBABILITY_SCALE;
 		int dHeight;
 		if(size < 5)
 			dHeight = 50 + 20 * size;

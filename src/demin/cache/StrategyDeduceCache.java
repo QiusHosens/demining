@@ -13,19 +13,23 @@ public class StrategyDeduceCache {
 	
 	public static Queue<Strategy> strategyDeduce = new ConcurrentLinkedQueue<>();
 	
+	public static Queue<Strategy> newStrategyDeduce = new ConcurrentLinkedQueue<>();
+	
 	public static void add(Strategy strategy){
+//		if(!isExist(strategy))
+			strategyDeduce.add(strategy);
+	}
+	
+	public static boolean isExist(Strategy strategy){
 		String gridPos = strategy.getGrids();
 		List<String> gridPosList = new ArrayList<String>(Arrays.asList(gridPos.split(",")));
-		boolean isExist = false;
 		for(Strategy strat : strategyDeduce){
 			List<String> gridPosList1 = new ArrayList<String>(Arrays.asList(strat.getGrids().split(",")));
 			if(CollectionUtil.exclude(gridPosList, gridPosList1).isEmpty() && CollectionUtil.exclude(gridPosList1, gridPosList).isEmpty()){
-				isExist = true;
-				break;
+				return true;
 			}
 		}
-		if(!isExist)
-			strategyDeduce.add(strategy);
+		return false;
 	}
 	
 	public static Queue<Strategy> get(){

@@ -130,6 +130,15 @@ public class MineRegionCache {
 	 */
 	public static Map<String, Integer> removeMarkGridPosFromRegion(Map<String, Integer> region, MyGrid grid){
 		String pos = String.valueOf(grid.getPos());
+		region = removeMarkGridPosFromRegion(region, pos);
+		return region;
+	}
+	
+	/**
+	 * 移除已标记为地雷的块
+	 * @param grid
+	 */
+	public static Map<String, Integer> removeMarkGridPosFromRegion(Map<String, Integer> region, String pos){
 		List<String> removeKeys = new ArrayList<String>();
 		Map<String, Integer> addRegions = new HashMap<String, Integer>();
 		for (Entry<String, Integer> entry : region.entrySet()) {
@@ -207,6 +216,15 @@ public class MineRegionCache {
 	 */
 	public static Map<String, Integer> removeOpenGridPosFromRegion(Map<String, Integer> region, MyGrid grid){
 		String pos = String.valueOf(grid.getPos());
+		region = removeOpenGridPosFromRegion(region, pos);
+		return region;
+	}
+	
+	/**
+	 * 移除已标记为打开的块
+	 * @param grid
+	 */
+	public static Map<String, Integer> removeOpenGridPosFromRegion(Map<String, Integer> region, String pos){
 		List<String> removeKeys = new ArrayList<String>();
 		Map<String, Integer> addRegions = new HashMap<String, Integer>();
 		for (Entry<String, Integer> entry : region.entrySet()) {

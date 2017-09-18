@@ -4,6 +4,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Map;
 
+import demin.cache.GameCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
@@ -28,7 +29,7 @@ public class MineMouseListener implements MouseListener {
 		MyGrid grid = (MyGrid) e.getSource();
 		Map<Integer, MyGrid> grids = DeminFrame.getDeminFrame().getGrids();
 		grid = grids.get(grid.getPos());
-		System.out.print(grid.getMineNum() + " ");
+		GameCache.setStep(String.valueOf(grid.getPos()));
 		int type = e.getButton();
 		switch (type) {
 		case MouseEvent.BUTTON1://左键
