@@ -28,20 +28,19 @@ public class StrategyRunnable implements Runnable {
 				generateStrategy(useValueStack);
 		}
 		
-		Map<String, CountDownLatch> latchs = null;
-		while((latchs = LatchCache.getCurrLatch()) != null){
-			CountDownLatch currLatch = latchs.get("currLatch");
-			CountDownLatch preLatch = latchs.get("preLatch");
-			if(preLatch == null)
-				currLatch.countDown();
-			else{
-				try {
-					preLatch.await();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				currLatch.countDown();
+		Map<String, CountDownLatch> latchs = LatchCache.getCurrLatch();
+		CountDownLatch currLatch = latchs.get("currLatch");
+		CountDownLatch preLatch = latchs.get("preLatch");
+		System.out.println(latchs);
+		if(preLatch == null)
+			currLatch.countDown();
+		else{
+			try {
+				preLatch.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
+			currLatch.countDown();
 		}
 	}
 	

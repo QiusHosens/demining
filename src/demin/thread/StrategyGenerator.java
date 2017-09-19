@@ -31,12 +31,13 @@ public class StrategyGenerator {
 	
 	public void addThread(int num){
 		ExecutorService pool = this.getStrategyThreadPool();
-		for(int index = 0; index < num; index ++){
-			pool.execute(new StrategyRunnable());
-		}
 		LayoutConstants.CURRENT_THREAD_COUNT += num;
 		CountDownLatch latch = new CountDownLatch(num);
 		LatchCache.push(latch);
+		System.out.println("add latch: " + latch);
+		for(int index = 0; index < num; index ++){
+			pool.execute(new StrategyRunnable());
+		}
 	}
 	
 	public void check(){
@@ -46,8 +47,10 @@ public class StrategyGenerator {
 		if(threadCount > Constants.MAX_THREAD_COUNT)
 			threadCount = Constants.MAX_THREAD_COUNT;
 		int addThreadCount = threadCount - LayoutConstants.CURRENT_THREAD_COUNT;
-		if(addThreadCount > 0)
+		if(addThreadCount > 0){
+			System.out.println(size);
 			addThread(addThreadCount);
+		}
 	}
 	
 	private ExecutorService getStrategyThreadPool(){

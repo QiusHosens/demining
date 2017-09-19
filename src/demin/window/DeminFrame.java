@@ -308,6 +308,7 @@ public class DeminFrame extends Frame {
 		stack.push(value);
 		
 		CountDownLatch latch = new CountDownLatch(Constants.INIT_THREAD_COUNT);
+		System.out.println("init latch: " + latch);
 		LatchCache.push(latch);
 		StrategyGenerator.getStrategyGenerator().execute();
 		try {
@@ -403,7 +404,7 @@ public class DeminFrame extends Frame {
 		Queue<Strategy> strategyList = StrategyDeduceCache.get();
 		System.out.println("strategys: " + strategy_count + " " + strategyList.size());
 		for (Strategy strategy : strategyList) {
-			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
+//			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
 		}
 		
 		//计算各点是雷的概率
