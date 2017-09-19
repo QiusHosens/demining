@@ -13,7 +13,17 @@ public class StrategyDeduceCache {
 	
 	public static Queue<Strategy> strategyDeduce = new ConcurrentLinkedQueue<>();
 	
-	public static Queue<Strategy> newStrategyDeduce = new ConcurrentLinkedQueue<>();
+	public static Queue<Strategy> strategyDeduce2 = new ConcurrentLinkedQueue<>();
+	
+	public static Queue<Strategy> strategyDeduce3 = new ConcurrentLinkedQueue<>();
+	
+	public static void add2(Strategy strategy){
+		strategyDeduce2.add(strategy);
+	}
+	
+	public static void add3(Strategy strategy){
+		strategyDeduce3.add(strategy);
+	}
 	
 	public static void add(Strategy strategy){
 //		if(!isExist(strategy))
@@ -36,8 +46,29 @@ public class StrategyDeduceCache {
 		return strategyDeduce;
 	}
 	
+	public static Queue<Strategy> get2(){
+		return strategyDeduce2;
+	}
+	
+	public static Queue<Strategy> get3(){
+		return strategyDeduce3;
+	}
+	
 	public static void clear(){
 		strategyDeduce.clear();
+		strategyDeduce2.clear();
+		strategyDeduce3.clear();
+	}
+	
+	public static List<Strategy> compare12(){
+		Queue<Strategy> maxQueue = strategyDeduce.size() > strategyDeduce2.size() ? strategyDeduce : strategyDeduce2;
+		Queue<Strategy> minQueue = strategyDeduce.equals(maxQueue) ? strategyDeduce2 : strategyDeduce;
+		List<Strategy> strategys = new ArrayList<>();
+		for(Strategy strategy : maxQueue){
+			if(!minQueue.contains(strategy))
+				strategys.add(strategy);
+		}
+		return strategys;
 	}
 	
 }

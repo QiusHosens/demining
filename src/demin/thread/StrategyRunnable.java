@@ -22,6 +22,8 @@ import demin.util.CollectionUtil;
 
 public class StrategyRunnable implements Runnable {
 	
+	private static int count;
+	
 	@Override
 	public void run() {
 		while(!MiddleValueCache.isEmpty()){
@@ -54,6 +56,7 @@ public class StrategyRunnable implements Runnable {
 		int regionMineNum = useValue.getRegionMineNum();
 		int pos = useValue.getCurrPos();
 		while(pos != -1){
+			System.out.println(count ++);
 			region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 			poss.append(",").append(pos);
 			closeGridNum --;
@@ -84,8 +87,10 @@ public class StrategyRunnable implements Runnable {
 			}
 			
 			if(region.isEmpty()){
+				if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
+					break;
 				Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
-				StrategyDeduceCache.add(strategy);
+				StrategyDeduceCache.add2(strategy);
 				break;
 			}
 			
