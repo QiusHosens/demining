@@ -452,6 +452,13 @@ public class MyGrid extends Button {
 		//与格子周围打开不是雷的块中比较,标记雷或打开不是雷的格子
 		//找相邻打开格子
 		List<MyGrid> grids = getOpenIsNotMineAndNotFullOpenGrids();
+		
+		int selfMarkCount1 = getMarkCount();//标记为雷的格子数量
+		int selfUnsureCount1 = mineNum - selfMarkCount1;//周围不确定地雷的数量
+		List<MyGrid> selfCloseGrids1 = getUnOpenNotMarkGrids();
+		MineRegionCache.putNewRegion(selfCloseGrids1, selfUnsureCount1);
+		MineRegionCache.putAllRegion(selfCloseGrids1, selfUnsureCount1);
+		
 		//找相邻格子的相邻打开格子
 		//所有格子
 		List<MyGrid> allGrids = getGridByStateInReflect(-1);
@@ -463,12 +470,6 @@ public class MyGrid extends Button {
 		
 		if(grids.isEmpty())
 			return false;
-		
-		int selfMarkCount1 = getMarkCount();//标记为雷的格子数量
-		int selfUnsureCount1 = mineNum - selfMarkCount1;//周围不确定地雷的数量
-		List<MyGrid> selfCloseGrids1 = getUnOpenNotMarkGrids();
-		MineRegionCache.putNewRegion(selfCloseGrids1, selfUnsureCount1);
-		MineRegionCache.putAllRegion(selfCloseGrids1, selfUnsureCount1);
 		
 		boolean isChange = false;
 		for (MyGrid grid : grids) {

@@ -13,24 +13,28 @@ public class MiddleValue {
 	
 	private int regionMineNum;
 	
-	private Map<String, Integer> region;
+	private Map<String, Integer> commonRegion;
+	
+	private Map<String, Integer> unCommonRegion;
 	
 	private CountDownLatch latch;
 	
-	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region){
+	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region, Map<String, Integer> unCommonRegion){
 		this.currPos = currPos;
 		this.gridPos = gridPos;
 		this.closeGridNum = closeGridNum;
 		this.regionMineNum = regionMineNum;
-		this.region = region;
+		this.commonRegion = region;
+		this.unCommonRegion = unCommonRegion;
 	}
 	
-	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region, CountDownLatch latch){
+	public MiddleValue(Integer currPos, StringBuilder gridPos, int closeGridNum, int regionMineNum, Map<String, Integer> region, Map<String, Integer> unCommonRegion, CountDownLatch latch){
 		this.currPos = currPos;
 		this.gridPos = gridPos;
 		this.closeGridNum = closeGridNum;
 		this.regionMineNum = regionMineNum;
-		this.region = region;
+		this.commonRegion = region;
+		this.unCommonRegion = unCommonRegion;
 		this.latch = latch;
 	}
 
@@ -74,12 +78,20 @@ public class MiddleValue {
 		this.regionMineNum = regionMineNum;
 	}
 
-	public Map<String, Integer> getRegion() {
-		return region;
+	public Map<String, Integer> getCommonRegion() {
+		return commonRegion;
 	}
 
-	public void setRegion(Map<String, Integer> region) {
-		this.region = region;
+	public void setCommonRegion(Map<String, Integer> commonRegion) {
+		this.commonRegion = commonRegion;
+	}
+
+	public Map<String, Integer> getUnCommonRegion() {
+		return unCommonRegion;
+	}
+
+	public void setUnCommonRegion(Map<String, Integer> unCommonRegion) {
+		this.unCommonRegion = unCommonRegion;
 	}
 	
 }

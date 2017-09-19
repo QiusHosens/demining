@@ -39,6 +39,9 @@ public class LatchCache {
 			count ++;
 		} else {
 			preLatch = currLatch;
+			if(latchs.isEmpty()){
+				System.out.println(currLatch);
+			}
 			currLatch = pop();
 			count = 1;
 		}

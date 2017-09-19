@@ -170,7 +170,7 @@ public class DeminFrame extends Frame {
 		
 		while(allGrids != null && !allGrids.isEmpty()){
 			//先移除已经完全打开的块和已标识为雷的块
-			allGrids.removeIf(grid -> GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState() || grid.isFullOpen());
+			allGrids.removeIf(grid -> (GridStateConstants.GRID_STATE_CLOSE_MARK_MINE == grid.getState() || grid.isFullOpen()));
 			//找出可以完全打开的块
 			for(int index = allGrids.size() - 1; index >= 0; index --){
 				MyGrid grid = allGrids.get(index);
@@ -221,9 +221,6 @@ public class DeminFrame extends Frame {
 				
 				if(!needReFind){
 					this.refreshFrame();
-//					if((LayoutConstants.LEFT_MINE <= Constants.USE_STRATEGY_LEFT_MINE_NUM || this.closeCount <= Constants.USE_STRATEGY_CLOSE_GRID_NUM) && this.strategyDeduce()){
-//						needReFind = true;
-//					}
 					if(this.strategyDeduce()){
 						needReFind = true;
 					}
@@ -303,7 +300,7 @@ public class DeminFrame extends Frame {
 		StringBuilder allPoss = new StringBuilder();
 		int allCloseGridNum = this.closeCount;
 		int allRegionMineNum = 0;
-		MiddleValue value = new MiddleValue(-1, new StringBuilder(allPoss), allCloseGridNum, allRegionMineNum, new HashMap<>(cloneRegions));
+		MiddleValue value = new MiddleValue(-1, new StringBuilder(allPoss), allCloseGridNum, allRegionMineNum, new HashMap<>(cloneRegions), new HashMap<>());
 		MiddleValueCache.add(value);
 		stack.push(value);
 		
@@ -404,7 +401,7 @@ public class DeminFrame extends Frame {
 		Queue<Strategy> strategyList = StrategyDeduceCache.get();
 		System.out.println("strategys: " + strategy_count + " " + strategyList.size());
 		for (Strategy strategy : strategyList) {
-//			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
+			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
 		}
 		
 		//计算各点是雷的概率

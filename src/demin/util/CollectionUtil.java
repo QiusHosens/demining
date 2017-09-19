@@ -54,6 +54,8 @@ public class CollectionUtil {
 	 * @param m
 	 */
 	public static BigDecimal combination(int n, int m){
+		if(m == 0)
+			return new BigDecimal(1);
 		if(m > n / 2)
 			return combination(n, n - m);
 		else{
