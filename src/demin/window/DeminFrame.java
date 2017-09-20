@@ -365,7 +365,7 @@ public class DeminFrame extends Frame {
 					strategy_count ++;
 					if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
 						break;
-					Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
+					Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
 					StrategyDeduceCache.add(strategy);
 					break;
 				}
@@ -422,7 +422,7 @@ public class DeminFrame extends Frame {
 		System.out.println("strategys use time: " + (strategyEnd - strategyStart) + " strategys count: " + count);
 		System.out.println("strategys2 use time: " + (strategy2End - strategy2Start) + " strategys2 count: " + StrategyRunnable.count + " thread num: " + LayoutConstants.CURRENT_THREAD_COUNT);
 //		for (Strategy strategy : strategyList) {
-//			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
+//			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getLeftCloseNum());
 //		}
 		
 		//计算各点是雷的概率
@@ -432,9 +432,14 @@ public class DeminFrame extends Frame {
 			BigDecimal totalPosibleNum = new BigDecimal(0);
 			int minPosibleMinNum = 0;//最小可能雷数
 			for (Strategy strategy : strategyList) {
-				totalPosibleNum = totalPosibleNum.add(strategy.getProbability());
 				if(minPosibleMinNum == 0 || minPosibleMinNum > strategy.getMineNum())
 					minPosibleMinNum = strategy.getMineNum();
+			}
+			
+			for (Strategy strategy : strategyList) {
+				BigDecimal possible = CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum());
+				strategy.setPossible(possible);
+				totalPosibleNum = totalPosibleNum.add(possible);
 			}
 			
 			if(minPosibleMinNum == LayoutConstants.LEFT_MINE){//如果策略中最小的可能雷数等于剩余的雷数,则雷肯定在雷区中,打开不在雷区中的块
@@ -467,7 +472,7 @@ public class DeminFrame extends Frame {
 					String gridPos = strategy.getGrids();
 					List<String> gridPosList = Arrays.asList(gridPos.split(","));
 					if(gridPosList.contains(pos))
-						gridPosibleNum = gridPosibleNum.add(strategy.getProbability());
+						gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
 				}
 				Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, Constants.PROBABILITY_SCALE, 0));
 				probabilityList.add(gridProbability);

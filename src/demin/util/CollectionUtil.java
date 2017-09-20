@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import demin.constants.Constants;
+
 public class CollectionUtil {
 
 	/**
@@ -71,6 +73,28 @@ public class CollectionUtil {
 		}
 	}
 	
+	/**
+	 * 计算同底组合之间相差的倍数
+	 * @param n 底数
+	 * @param m1 组合的选择数
+	 * @param m2 
+	 * @return
+	 */
+	public static BigDecimal combinateDivide(int n, int m1, int m2){
+		if(m1 < m2)
+			return new BigDecimal(1).divide(combinateDivide(n, m2, m1), Constants.PROBABILITY_SCALE, 0);
+		int len = m1 - m2;
+		BigDecimal denom = new BigDecimal(1);//分母
+		BigDecimal mole = new BigDecimal(1);//分子
+		for(int i = 0; i < len; i ++){
+			mole = mole.multiply(new BigDecimal(n - m1 + 1 + i));
+			denom = denom.multiply(new BigDecimal(m1 - i));
+		}
+		if(denom.equals(0))
+			System.out.println("错误:n:" + n + " m1:" + m1 + " m2:" + m2 + " denom:" + denom + " mole:" + mole);
+		return mole.divide(denom, Constants.PROBABILITY_SCALE, 0);
+	}
+	
 	public static <T> String listToString(List<T> list, String separator){
 		int index = 0;
 		StringBuilder sb = new StringBuilder();
@@ -82,6 +106,10 @@ public class CollectionUtil {
 			index ++;
 		}
 		return sb.toString();
+	}
+	
+	public static void main(String[] args){
+		System.out.println(combinateDivide(10, 2, 3));
 	}
 	
 }

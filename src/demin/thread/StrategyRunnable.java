@@ -98,7 +98,7 @@ public class StrategyRunnable implements Runnable {
 			if(region.isEmpty()){
 				if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
 					break;
-				Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
+				Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
 				StrategyDeduceCache.add2(strategy);
 				break;
 			}

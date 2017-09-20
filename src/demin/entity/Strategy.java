@@ -9,10 +9,18 @@ public class Strategy {
 	private BigDecimal possible;
 	
 	private Integer mineNum;
+	
+	private Integer leftCloseNum;
 
 	public Strategy(String grids, BigDecimal possible, Integer mineNum){
 		this.grids = grids;
 		this.possible = possible;
+		this.mineNum = mineNum;
+	}
+	
+	public Strategy(String grids, Integer leftCloseNum, Integer mineNum){
+		this.grids = grids;
+		this.leftCloseNum = leftCloseNum;
 		this.mineNum = mineNum;
 	}
 	
@@ -24,11 +32,11 @@ public class Strategy {
 		this.grids = grids;
 	}
 
-	public BigDecimal getProbability() {
+	public BigDecimal getPossible() {
 		return possible;
 	}
 
-	public void setProbability(BigDecimal possible) {
+	public void setPossible(BigDecimal possible) {
 		this.possible = possible;
 	}
 
@@ -40,8 +48,17 @@ public class Strategy {
 		this.mineNum = mineNum;
 	}
 	
+	public Integer getLeftCloseNum() {
+		return leftCloseNum;
+	}
+
+	public void setLeftCloseNum(Integer leftCloseNum) {
+		this.leftCloseNum = leftCloseNum;
+	}
+
 	public boolean equals(Strategy s){
-		if(this.grids.equals(s.getGrids()) && this.possible.equals(s.getProbability()) && this.mineNum.equals(s.getMineNum()))
+		if(this.grids.equals(s.getGrids()) 
+				&& this.mineNum.equals(s.getMineNum()) && this.leftCloseNum.equals(s.getLeftCloseNum()))
 			return true;
 		return false;
 	}
