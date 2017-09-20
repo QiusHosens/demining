@@ -129,8 +129,11 @@ public class DeminFrame extends Frame {
 		LayoutConstants.FRAME_HEIGHT = (LayoutConstants.MODEL_COLUMN + 1) * Constants.SINGLE_HEIGHT + 120;
 		
 		setLayout(new GridBagLayout());
-		setLocation((LayoutConstants.SCREEN_WIDTH - LayoutConstants.FRAME_WIDTH) / 2, 
-				(LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2);
+		
+		if(frame == null){
+			setLocation((LayoutConstants.SCREEN_WIDTH - LayoutConstants.FRAME_WIDTH) / 2, 
+					(LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2);
+		}
 		
 		Panel selectPanel = getSelectPanel();
 		selectPanel.setVisible(true);
@@ -919,16 +922,9 @@ public class DeminFrame extends Frame {
 	}
 	
 	public Dialog getTipDialog(int size){
-		int posX = 0;
-		int posY = 0;
 		if(tip == null){
 			tip = new Dialog(this);
-			posX = (LayoutConstants.SCREEN_WIDTH + LayoutConstants.FRAME_WIDTH) / 2;
-			posY = (LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2;
-		}
-		else{
-			posX = tip.getX();
-			posY = tip.getY();
+			tip.setLocation((LayoutConstants.SCREEN_WIDTH + LayoutConstants.FRAME_WIDTH) / 2, (LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2);
 		}
 		tip.setLayout(new GridBagLayout());
 		int dWidth = 300 + 10 * Constants.PROBABILITY_SCALE;
@@ -938,7 +934,6 @@ public class DeminFrame extends Frame {
 		else
 			dHeight = 30 + 18 * size;
 		tip.setSize(dWidth, dHeight);
-		tip.setBounds(posX, posY, dWidth, dHeight);
 		
 		if(tipLabel == null){
 			tipLabel = new JLabel();
