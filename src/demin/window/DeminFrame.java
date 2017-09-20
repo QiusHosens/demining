@@ -41,6 +41,7 @@ import demin.cache.StrategyDeduceCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
+import demin.entity.GroupStrategy;
 import demin.entity.MiddleValue;
 import demin.entity.MyGrid;
 import demin.entity.OneGame;
@@ -309,113 +310,13 @@ public class DeminFrame extends Frame {
 		MiddleValueCache.add(value);
 		stack.push(value);
 		
+		//多线程
 		long strategy2Start = System.currentTimeMillis();
-		LayoutConstants.CURRENT_THREAD_COUNT = Constants.INIT_THREAD_COUNT;
-		StrategyRunnable.count = 0;
-		CountDownLatch latch = new CountDownLatch(Constants.INIT_THREAD_COUNT);
-		System.out.println("init latch: " + latch);
-		LatchCache.push(latch);
-		StrategyGenerator.getStrategyGenerator().execute();
-		try {
-			latch.await();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		threadGenerateStrategy(stack);
 		long strategy2End = System.currentTimeMillis();
 		
 		long strategyStart = System.currentTimeMillis();
-		int count = 0;
-		int strategy_count = 0;
-		while(!stack.isEmpty()){
-			MiddleValue useValue = stack.pop();
-			Map<String, Integer> region = useValue.getCommonRegion();
-			Map<String, Integer> unCommonRegion = useValue.getUnCommonRegion();
-			StringBuilder poss = useValue.getGridPos();
-			int closeGridNum = useValue.getCloseGridNum();
-			int regionMineNum = useValue.getRegionMineNum();
-			int pos = useValue.getCurrPos();
-			while(pos != -1){
-				count ++;
-				region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
-				poss.append(",").append(pos);
-				closeGridNum --;
-				regionMineNum ++;
-				if(regionMineNum > LayoutConstants.LEFT_MINE)//如果区域内假设雷数量多于剩余雷数,则策略失败
-					break;
-				
-				if(!region.isEmpty()){
-					Set<Integer> canOpenGridPos = new HashSet<Integer>();
-					//去除不是雷的块
-					for(Entry<String, Integer> entry1 : region.entrySet()){
-						String gridsPoss = entry1.getKey();
-						Integer mineNum = entry1.getValue();
-						String[] gridsArr = gridsPoss.split(",");
-						List<String> gridsPosList = Arrays.asList(gridsArr);
-						if(mineNum == 0){
-							for(String gridPos1 : gridsPosList){
-								Integer gridPosInt = Integer.parseInt(gridPos1);
-								canOpenGridPos.add(gridPosInt);
-							}
-						}
-					}
-				
-					for(Integer gridPos1 : canOpenGridPos){
-						region = MineRegionCache.removeOpenGridPosFromRegion(region, String.valueOf(gridPos1));
-						closeGridNum --;
-					}
-				}
-				
-				if(region.isEmpty()){
-					strategy_count ++;
-					if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
-						break;
-					Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
-					StrategyDeduceCache.add(strategy);
-					break;
-				}
-				
-				//找确定是雷的块
-				boolean isFind = false;
-				for(Entry<String, Integer> entry1 : region.entrySet()){
-					String gridsPoss = entry1.getKey();
-					Integer mineNum = entry1.getValue();
-					String[] gridsArr = gridsPoss.split(",");
-					List<String> gridsPosList = Arrays.asList(gridsArr);
-					if(mineNum == gridsPosList.size()){
-						isFind = true;
-						for(String gridPos1 : gridsPosList){
-							Integer gridPosInt = Integer.parseInt(gridPos1);
-							pos = gridPosInt;
-							isFind = true;
-							break;
-						}
-					}
-					if(isFind)
-						break;
-				}
-				if(!isFind){
-					break;
-				}
-			}
-			if(region != null && !region.isEmpty()){
-				for(Entry<String, Integer> entry1 : region.entrySet()){
-					String gridPoss = entry1.getKey();
-					String[] gridPossList = gridPoss.split(",");
-					Map<String, Integer> cloneRegion = new HashMap<String, Integer>(region);
-					for(String gridPos1 : gridPossList){
-						Integer gridPosInt = Integer.parseInt(gridPos1);
-						if(!MineRegionCache.validate(cloneRegion))
-							break;
-						MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion), new HashMap<>(unCommonRegion));
-						stack.push(setValue);
-						//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
-						cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
-						closeGridNum --;
-					}
-					break;
-				}
-			}
-		}
+		int count = generateStrategy(stack);
 		long strategyEnd = System.currentTimeMillis();
 		
 		System.out.println("difficult: " + StrategyDeduceCache.compare12());
@@ -441,7 +342,7 @@ public class DeminFrame extends Frame {
 			}
 			
 			for (Strategy strategy : strategyList) {
-				BigDecimal possible = CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum());
+				BigDecimal possible = strategy.getPossible().multiply(CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum()));
 				strategy.setPossible(possible);
 				totalPosibleNum = totalPosibleNum.add(possible);
 			}
@@ -511,38 +412,6 @@ public class DeminFrame extends Frame {
 			}
 			sb.append("</html>");
 			
-			//策略2每个块的概率
-			BigDecimal totalPosibleNum2 = new BigDecimal(0);
-			int minPosibleMinNum2 = 0;//最小可能雷数
-			for(Strategy strategy : strategyList2){
-				if(minPosibleMinNum2 == 0 || minPosibleMinNum2 > strategy.getMineNum())
-					minPosibleMinNum2 = strategy.getMineNum();
-			}
-			
-			for(Strategy strategy : strategyList2){
-				BigDecimal possible = strategy.getPossible().multiply(CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum()));
-				strategy.setPossible(possible);
-				totalPosibleNum2 = totalPosibleNum2.add(possible);
-			}
-			
-			List<Probability> probabilityList2 = new ArrayList<>();
-			for(String pos2 : posList){
-				BigDecimal gridPosibleNum = new BigDecimal(0);
-				for (Strategy strategy : strategyList) {
-					String gridPos = strategy.getGrids();
-					List<String> gridPosList = Arrays.asList(gridPos.split(","));
-					if(gridPosList.contains(pos2))
-						gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
-				}
-				Probability gridProbability = new Probability(Integer.parseInt(pos2), gridPosibleNum.divide(totalPosibleNum, Constants.PROBABILITY_SCALE, 0));
-				probabilityList2.add(gridProbability);
-			}
-			probabilityList2.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
-			System.out.println("probabilityList2:");
-			for (Probability probability : probabilityList2) {
-				System.out.println(probability.getPos() + " " + probability.getProbability());
-			}
-			
 			tip = getTipDialog(probabilityList.size());
 			tip.setVisible(true);
 			
@@ -550,6 +419,167 @@ public class DeminFrame extends Frame {
 		}
 		
 		return isChange;
+	}
+	
+	public int generateStrategy(Stack<MiddleValue> stack){
+		int count = 0;
+		while(!stack.isEmpty()){
+			MiddleValue useValue = stack.pop();
+			Map<String, Integer> region = useValue.getCommonRegion();
+			Map<String, Integer> unCommonRegion = useValue.getUnCommonRegion();
+			StringBuilder poss = useValue.getGridPos();
+			int closeGridNum = useValue.getCloseGridNum();
+			int regionMineNum = useValue.getRegionMineNum();
+			int pos = useValue.getCurrPos();
+			while(pos != -1){
+				count ++;
+				region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
+				poss.append(",").append(pos);
+				closeGridNum --;
+				regionMineNum ++;
+				if(regionMineNum > LayoutConstants.LEFT_MINE)//如果区域内假设雷数量多于剩余雷数,则策略失败
+					break;
+				
+				if(!region.isEmpty()){
+					Set<Integer> canOpenGridPos = new HashSet<Integer>();
+					//去除不是雷的块
+					for(Entry<String, Integer> entry1 : region.entrySet()){
+						String gridsPoss = entry1.getKey();
+						Integer mineNum = entry1.getValue();
+						String[] gridsArr = gridsPoss.split(",");
+						List<String> gridsPosList = Arrays.asList(gridsArr);
+						if(mineNum == 0){
+							for(String gridPos1 : gridsPosList){
+								Integer gridPosInt = Integer.parseInt(gridPos1);
+								canOpenGridPos.add(gridPosInt);
+							}
+						}
+					}
+				
+					for(Integer gridPos1 : canOpenGridPos){
+						region = MineRegionCache.removeOpenGridPosFromRegion(region, String.valueOf(gridPos1));
+						closeGridNum --;
+					}
+				}
+				
+//				if(region.isEmpty()){
+//					if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
+//						break;
+//					Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
+//					StrategyDeduceCache.add(strategy);
+//					break;
+//				}
+				
+				//找确定是雷的块
+				boolean isFind = false;
+				for(Entry<String, Integer> entry1 : region.entrySet()){
+					String gridsPoss = entry1.getKey();
+					Integer mineNum = entry1.getValue();
+					String[] gridsArr = gridsPoss.split(",");
+					List<String> gridsPosList = Arrays.asList(gridsArr);
+					if(mineNum == gridsPosList.size()){
+						isFind = true;
+						for(String gridPos1 : gridsPosList){
+							Integer gridPosInt = Integer.parseInt(gridPos1);
+							pos = gridPosInt;
+							isFind = true;
+							break;
+						}
+					}
+					if(isFind)
+						break;
+				}
+				if(!isFind){
+					break;
+				}
+			}
+			
+			Map<String, Integer> commonRegion = MineRegionCache.getCommonRegion(region);
+			Map<String, Integer> newUnCommonRegion = MineRegionCache.exclude(region, commonRegion);
+			regionMineNum += MineRegionCache.getUnCommonRegionMineNum(newUnCommonRegion);
+			closeGridNum -= MineRegionCache.getUnCommonRegionGridNum(newUnCommonRegion);
+			unCommonRegion.putAll(newUnCommonRegion);
+			region = commonRegion;
+			
+			if(region != null && !region.isEmpty()){
+				for(Entry<String, Integer> entry1 : region.entrySet()){
+					String gridPoss = entry1.getKey();
+					String[] gridPossList = gridPoss.split(",");
+					Map<String, Integer> cloneRegion = new HashMap<String, Integer>(region);
+					for(String gridPos1 : gridPossList){
+						Integer gridPosInt = Integer.parseInt(gridPos1);
+						if(!MineRegionCache.validate(cloneRegion))
+							break;
+						MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion), new HashMap<>(unCommonRegion));
+						stack.push(setValue);
+						//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
+						cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
+						closeGridNum --;
+					}
+					break;
+				}
+			}
+			else{
+				GroupStrategy group = MineRegionCache.getGroupStrategy(unCommonRegion);
+				for(String pos1 : group.getPos()){
+					StringBuilder poss1 = new StringBuilder(poss);
+					poss1.append(",").append(pos1);
+					Strategy strategy = new Strategy(poss1.substring(1).toString(), 
+							group.getPossible(), closeGridNum, regionMineNum);
+					StrategyDeduceCache.add(strategy);
+				}
+			}
+		}
+		return count;
+	}
+	
+	public void threadGenerateStrategy(Stack<MiddleValue> stack){
+		LayoutConstants.CURRENT_THREAD_COUNT = Constants.INIT_THREAD_COUNT;
+		StrategyRunnable.count = 0;
+		CountDownLatch latch = new CountDownLatch(Constants.INIT_THREAD_COUNT);
+		System.out.println("init latch: " + latch);
+		LatchCache.push(latch);
+		StrategyGenerator.getStrategyGenerator().execute();
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		//策略2每个块的概率
+		Queue<Strategy> strategyList2 = StrategyDeduceCache.get2();
+		BigDecimal totalPosibleNum2 = new BigDecimal(0);
+		int minPosibleMinNum2 = 0;//最小可能雷数
+		for(Strategy strategy : strategyList2){
+			if(minPosibleMinNum2 == 0 || minPosibleMinNum2 > strategy.getMineNum())
+				minPosibleMinNum2 = strategy.getMineNum();
+		}
+		
+		for(Strategy strategy : strategyList2){
+			BigDecimal possible = strategy.getPossible().multiply(CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum2, LayoutConstants.LEFT_MINE - strategy.getMineNum()));
+			strategy.setPossible(possible);
+			totalPosibleNum2 = totalPosibleNum2.add(possible);
+		}
+		
+		Set<String> posList = new HashSet<>();
+		
+		List<Probability> probabilityList2 = new ArrayList<>();
+		for(String pos2 : posList){
+			BigDecimal gridPosibleNum = new BigDecimal(0);
+			for (Strategy strategy : strategyList2) {
+				String gridPos = strategy.getGrids();
+				List<String> gridPosList = Arrays.asList(gridPos.split(","));
+				if(gridPosList.contains(pos2))
+					gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
+			}
+			Probability gridProbability = new Probability(Integer.parseInt(pos2), gridPosibleNum.divide(totalPosibleNum2, Constants.PROBABILITY_SCALE, 0));
+			probabilityList2.add(gridProbability);
+		}
+		probabilityList2.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
+		System.out.println("probabilityList2:");
+		for (Probability probability : probabilityList2) {
+			System.out.println(probability.getPos() + " " + probability.getProbability());
+		}
 	}
 	
 	public void refreshFrame(){

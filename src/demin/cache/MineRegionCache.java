@@ -1,13 +1,17 @@
 package demin.cache;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import demin.entity.GroupStrategy;
 import demin.entity.MyGrid;
 import demin.util.CollectionUtil;
 
@@ -387,6 +391,69 @@ public class MineRegionCache {
 				return false;
 		}
 		return true;
+	}
+	
+	public static Map<String, Integer> getCommonRegion(Map<String, Integer> region){
+		Map<String, Integer> common = new HashMap<String, Integer>();
+		Set<String> poss = new HashSet<String>();
+		for(Entry<String, Integer> entry : region.entrySet()){
+			String posstr = entry.getKey();
+			String[] posList = posstr.split(",");
+			boolean isRepeat = false;
+			for (String pos : posList) {
+				if(poss.contains(pos)){
+					isRepeat = true;
+					break;
+				}else
+					poss.add(pos);
+			}
+			if(isRepeat){
+				Integer mineNum = entry.getValue();
+				common.put(posstr, mineNum);
+			}
+		}
+		return common;
+	}
+	
+	public static Map<String, Integer> exclude(Map<String, Integer> region1, Map<String, Integer> region2){
+		Map<String, Integer> region = new HashMap<String, Integer>();
+		for(Entry<String, Integer> entry : region1.entrySet()){
+			String poss = entry.getKey();
+			if(!region2.containsKey(poss)){
+				Integer mineNum = entry.getValue();
+				region.put(poss, mineNum);
+			}
+		}
+		return region;
+	}
+	
+	public static int getUnCommonRegionMineNum(Map<String, Integer> region){
+		int mineNum = 0;
+		for(Entry<String, Integer> entry : region.entrySet())
+			mineNum += entry.getValue();
+		return mineNum;
+	}
+	
+	public static int getUnCommonRegionGridNum(Map<String, Integer> region){
+		int gridNum = 0;
+		for(Entry<String, Integer> entry : region.entrySet())
+			gridNum += entry.getKey().split(",").length;
+		return gridNum;
+	}
+	
+	public static GroupStrategy getGroupStrategy(Map<String, Integer> region){
+		List<String> allPosList = new ArrayList<>();
+		BigDecimal allPossible = new BigDecimal(1);
+		
+		for(Entry<String, Integer> entry : region.entrySet()){
+			String poss = entry.getKey();
+			String[] posList = poss.split(",");
+			int mineNum = entry.getValue();
+			allPossible = allPossible.multiply(CollectionUtil.combination(posList.length, mineNum));
+			for(String pos : posList)
+				allPosList.add(pos);
+		}
+		return new GroupStrategy(allPosList, allPossible);
 	}
 	
 	public static void clearNewRegion(){
