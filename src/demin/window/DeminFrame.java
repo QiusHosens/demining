@@ -41,6 +41,7 @@ import demin.cache.StrategyDeduceCache;
 import demin.constants.Constants;
 import demin.constants.GridStateConstants;
 import demin.constants.LayoutConstants;
+import demin.entity.GridPossible;
 import demin.entity.GroupStrategy;
 import demin.entity.MiddleValue;
 import demin.entity.MyGrid;
@@ -563,6 +564,20 @@ public class DeminFrame extends Frame {
 		
 		Set<String> posList = new HashSet<>();
 		
+		for (Strategy strategy : strategyList2){
+			String gridPos = strategy.getGrids();
+			if(gridPos != null && !"".equals(gridPos)){
+				List<String> gridPosList = Arrays.asList(gridPos.split(","));
+				for (String pos : gridPosList) {
+					posList.add(pos);
+				}
+			}
+			
+			for(GridPossible gridPossible : strategy.getGridPossibles()){
+				posList.add(String.valueOf(gridPossible.getPos()));
+			}
+		}
+		
 		List<Probability> probabilityList2 = new ArrayList<>();
 		for(String pos2 : posList){
 			BigDecimal gridPosibleNum = new BigDecimal(0);
@@ -571,6 +586,14 @@ public class DeminFrame extends Frame {
 				List<String> gridPosList = Arrays.asList(gridPos.split(","));
 				if(gridPosList.contains(pos2))
 					gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
+				
+				//修改
+				for(GridPossible gridPossible : strategy.getGridPossibles()){
+					if(pos2.equals(String.valueOf(gridPossible.getPos()))){
+						gridPosibleNum = gridPosibleNum.add(gridPossible.getIsMinePossible());
+						break;
+					}
+				}
 			}
 			Probability gridProbability = new Probability(Integer.parseInt(pos2), gridPosibleNum.divide(totalPosibleNum2, Constants.PROBABILITY_SCALE, 0));
 			probabilityList2.add(gridProbability);

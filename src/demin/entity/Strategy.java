@@ -1,6 +1,7 @@
 package demin.entity;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class Strategy {
 	
@@ -11,6 +12,8 @@ public class Strategy {
 	private Integer mineNum;
 	
 	private Integer leftCloseNum;
+	
+	private List<GridPossible> gridPossibles;
 
 	public Strategy(String grids, BigDecimal possible, Integer mineNum){
 		this.grids = grids;
@@ -27,6 +30,14 @@ public class Strategy {
 	public Strategy(String grids, BigDecimal possible, Integer leftCloseNum, Integer mineNum){
 		this.grids = grids;
 		this.possible = possible;
+		this.leftCloseNum = leftCloseNum;
+		this.mineNum = mineNum;
+	}
+	
+	public Strategy(String grids, BigDecimal possible, List<GridPossible> gridPossibles, Integer leftCloseNum, Integer mineNum){
+		this.grids = grids;
+		this.possible = possible;
+		this.gridPossibles = gridPossibles;
 		this.leftCloseNum = leftCloseNum;
 		this.mineNum = mineNum;
 	}
@@ -61,6 +72,14 @@ public class Strategy {
 
 	public void setLeftCloseNum(Integer leftCloseNum) {
 		this.leftCloseNum = leftCloseNum;
+	}
+
+	public List<GridPossible> getGridPossibles() {
+		return gridPossibles;
+	}
+
+	public void setGridPossibles(List<GridPossible> gridPossibles) {
+		this.gridPossibles = gridPossibles;
 	}
 
 	public boolean equals(Strategy s){

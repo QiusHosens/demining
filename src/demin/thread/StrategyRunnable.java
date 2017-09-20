@@ -16,6 +16,7 @@ import demin.cache.MiddleValueCache;
 import demin.cache.MineRegionCache;
 import demin.cache.StrategyDeduceCache;
 import demin.constants.LayoutConstants;
+import demin.entity.GridPossible;
 import demin.entity.MiddleValue;
 import demin.entity.Strategy;
 import demin.util.CollectionUtil;
@@ -156,13 +157,9 @@ public class StrategyRunnable implements Runnable {
 		}
 		else{
 			GroupStrategy group = getGroupStrategy(unCommonRegion);
-			for(String pos1 : group.getPos()){
-				StringBuilder poss1 = new StringBuilder(poss);
-				poss1.append(",").append(pos1);
-				Strategy strategy = new Strategy(poss1.substring(1).toString(), 
-						group.getPossible(), closeGridNum, regionMineNum);
-				StrategyDeduceCache.add2(strategy);
-			}
+			Strategy strategy = new Strategy(new StringBuilder(poss).toString(), 
+					group.getPossible(), group.getPos(), closeGridNum, regionMineNum);
+			StrategyDeduceCache.add2(strategy);
 		}
 	}
 	
@@ -215,7 +212,7 @@ public class StrategyRunnable implements Runnable {
 	}
 	
 	private GroupStrategy getGroupStrategy(Map<String, Integer> region){
-		List<String> allPosList = new ArrayList<>();
+		List<GridPossible> allPosList = new ArrayList<>();
 		BigDecimal allPossible = new BigDecimal(1);
 		
 		for(Entry<String, Integer> entry : region.entrySet()){
@@ -223,8 +220,9 @@ public class StrategyRunnable implements Runnable {
 			String[] posList = poss.split(",");
 			int mineNum = entry.getValue();
 			allPossible = allPossible.multiply(CollectionUtil.combination(posList.length, mineNum));
+			BigDecimal isMinePossible = new BigDecimal(mineNum);
 			for(String pos : posList)
-				allPosList.add(pos);
+				allPosList.add(new GridPossible(Integer.parseInt(pos), isMinePossible));
 		}
 		return new GroupStrategy(allPosList, allPossible);
 	}
@@ -239,20 +237,20 @@ public class StrategyRunnable implements Runnable {
 	
 	class GroupStrategy{
 		
-		private List<String> pos;
+		private List<GridPossible> pos;
 		
 		private BigDecimal possible;
 		
-		public GroupStrategy(List<String> pos, BigDecimal possible){
+		public GroupStrategy(List<GridPossible> pos, BigDecimal possible){
 			this.pos = pos;
 			this.possible = possible;
 		}
 
-		public List<String> getPos() {
+		public List<GridPossible> getPos() {
 			return pos;
 		}
 
-		public void setPos(List<String> pos) {
+		public void setPos(List<GridPossible> pos) {
 			this.pos = pos;
 		}
 
