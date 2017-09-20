@@ -64,9 +64,16 @@ public class StrategyDeduceCache {
 		Queue<Strategy> maxQueue = strategyDeduce.size() > strategyDeduce2.size() ? strategyDeduce : strategyDeduce2;
 		Queue<Strategy> minQueue = strategyDeduce.equals(maxQueue) ? strategyDeduce2 : strategyDeduce;
 		List<Strategy> strategys = new ArrayList<>();
-		for(Strategy strategy : maxQueue){
-			if(!minQueue.contains(strategy))
-				strategys.add(strategy);
+		boolean isFind;
+		for(Strategy strategy1 : maxQueue){
+			isFind = false;
+			for(Strategy strategy2 : minQueue)
+				if(strategy1.equals(strategy2)){
+					isFind = true;
+					break;
+				}
+			if(!isFind)
+				strategys.add(strategy1);
 		}
 		return strategys;
 	}

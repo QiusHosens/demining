@@ -41,7 +41,7 @@ public class Strategy {
 	}
 	
 	public boolean equals(Strategy s){
-		if(this.grids.equals(s.getGrids()) && this.possible.equals(s.getGrids()) && this.mineNum.equals(s.getMineNum()))
+		if(this.grids.equals(s.getGrids()) && this.possible.equals(s.getProbability()) && this.mineNum.equals(s.getMineNum()))
 			return true;
 		return false;
 	}

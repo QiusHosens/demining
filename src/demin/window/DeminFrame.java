@@ -53,6 +53,7 @@ import demin.listener.OKMouseListener;
 import demin.listener.ReloadActionListener;
 import demin.listener.RestartActionListener;
 import demin.thread.StrategyGenerator;
+import demin.thread.StrategyRunnable;
 import demin.util.CollectionUtil;
 
 public class DeminFrame extends Frame {
@@ -304,6 +305,9 @@ public class DeminFrame extends Frame {
 		MiddleValueCache.add(value);
 		stack.push(value);
 		
+		long strategy2Start = System.currentTimeMillis();
+		LayoutConstants.CURRENT_THREAD_COUNT = Constants.INIT_THREAD_COUNT;
+		StrategyRunnable.count = 0;
 		CountDownLatch latch = new CountDownLatch(Constants.INIT_THREAD_COUNT);
 		System.out.println("init latch: " + latch);
 		LatchCache.push(latch);
@@ -313,7 +317,9 @@ public class DeminFrame extends Frame {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		long strategy2End = System.currentTimeMillis();
 		
+		long strategyStart = System.currentTimeMillis();
 		int count = 0;
 		int strategy_count = 0;
 		while(!stack.isEmpty()){
@@ -325,7 +331,7 @@ public class DeminFrame extends Frame {
 			int regionMineNum = useValue.getRegionMineNum();
 			int pos = useValue.getCurrPos();
 			while(pos != -1){
-				System.out.println(count ++);
+				count ++;
 				region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 				poss.append(",").append(pos);
 				closeGridNum --;
@@ -357,6 +363,8 @@ public class DeminFrame extends Frame {
 				
 				if(region.isEmpty()){
 					strategy_count ++;
+					if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
+						break;
 					Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
 					StrategyDeduceCache.add(strategy);
 					break;
@@ -375,8 +383,11 @@ public class DeminFrame extends Frame {
 							Integer gridPosInt = Integer.parseInt(gridPos1);
 							pos = gridPosInt;
 							isFind = true;
+							break;
 						}
 					}
+					if(isFind)
+						break;
 				}
 				if(!isFind){
 					break;
@@ -389,23 +400,30 @@ public class DeminFrame extends Frame {
 					Map<String, Integer> cloneRegion = new HashMap<String, Integer>(region);
 					for(String gridPos1 : gridPossList){
 						Integer gridPosInt = Integer.parseInt(gridPos1);
+						if(!MineRegionCache.validate(cloneRegion))
+							break;
 						MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion), new HashMap<>(unCommonRegion));
 						stack.push(setValue);
 						//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
 						cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
+						closeGridNum --;
 					}
 					break;
 				}
 			}
 		}
+		long strategyEnd = System.currentTimeMillis();
 		
 		System.out.println("difficult: " + StrategyDeduceCache.compare12());
 		
 		Queue<Strategy> strategyList = StrategyDeduceCache.get();
-		System.out.println("strategys: " + strategy_count + " " + strategyList.size());
-		for (Strategy strategy : strategyList) {
-			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
-		}
+		Queue<Strategy> strategyList2 = StrategyDeduceCache.get2();
+		System.out.println("strategys: " + strategyList.size() + " strategys2: " + strategyList2.size() + " strategy count: " + count);
+		System.out.println("strategys use time: " + (strategyEnd - strategyStart) + " strategys count: " + count);
+		System.out.println("strategys2 use time: " + (strategy2End - strategy2Start) + " strategys2 count: " + StrategyRunnable.count + " thread num: " + LayoutConstants.CURRENT_THREAD_COUNT);
+//		for (Strategy strategy : strategyList) {
+//			System.out.println(strategy.getGrids() + " " + strategy.getMineNum() + " " + strategy.getProbability());
+//		}
 		
 		//计算各点是雷的概率
 		List<Probability> probabilityList = new ArrayList<>();
@@ -859,8 +877,17 @@ public class DeminFrame extends Frame {
 	}
 	
 	public Dialog getTipDialog(int size){
-		if(tip == null)
+		int posX = 0;
+		int posY = 0;
+		if(tip == null){
 			tip = new Dialog(this);
+			posX = (LayoutConstants.SCREEN_WIDTH + LayoutConstants.FRAME_WIDTH) / 2;
+			posY = (LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2;
+		}
+		else{
+			posX = tip.getX();
+			posY = tip.getY();
+		}
 		tip.setLayout(new GridBagLayout());
 		int dWidth = 300 + 10 * Constants.PROBABILITY_SCALE;
 		int dHeight;
@@ -869,8 +896,7 @@ public class DeminFrame extends Frame {
 		else
 			dHeight = 30 + 18 * size;
 		tip.setSize(dWidth, dHeight);
-		tip.setBounds((LayoutConstants.SCREEN_WIDTH + LayoutConstants.FRAME_WIDTH) / 2, 
-				(LayoutConstants.SCREEN_HEIGHT - LayoutConstants.FRAME_HEIGHT) / 2, dWidth, dHeight);
+		tip.setBounds(posX, posY, dWidth, dHeight);
 		
 		if(tipLabel == null){
 			tipLabel = new JLabel();

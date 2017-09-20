@@ -381,6 +381,14 @@ public class MineRegionCache {
 		return intersection;
 	}
 	
+	public static boolean validate(Map<String, Integer> region){
+		for(Entry<String, Integer> entry : region.entrySet()){
+			if(entry.getKey().split(",").length < entry.getValue())
+				return false;
+		}
+		return true;
+	}
+	
 	public static void clearNewRegion(){
 		newMineRegions.clear();
 		setCanClearNewRegion(false);

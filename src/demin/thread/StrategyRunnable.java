@@ -22,7 +22,7 @@ import demin.util.CollectionUtil;
 
 public class StrategyRunnable implements Runnable {
 	
-	private static int count;
+	public static int count;
 	
 	@Override
 	public void run() {
@@ -32,20 +32,29 @@ public class StrategyRunnable implements Runnable {
 				generateStrategy(useValueStack);
 		}
 		
-		Map<String, CountDownLatch> latchs = LatchCache.getCurrLatch();
-		CountDownLatch currLatch = latchs.get("currLatch");
-		CountDownLatch preLatch = latchs.get("preLatch");
-		System.out.println(latchs);
-		if(preLatch == null)
-			currLatch.countDown();
-		else{
+//		Map<String, CountDownLatch> latchs = LatchCache.getCurrLatch();
+//		CountDownLatch currLatch = latchs.get("currLatch");
+//		CountDownLatch preLatch = latchs.get("preLatch");
+//		System.out.println(latchs);
+//		if(preLatch == null)
+//			currLatch.countDown();
+//		else{
+//			try {
+//				preLatch.await();
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//			currLatch.countDown();
+//		}
+		CountDownLatch preLatch;
+		if((preLatch = LatchCache.countDownAndGetPreLatch()) != null){
 			try {
 				preLatch.await();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			currLatch.countDown();
 		}
+			
 	}
 	
 	private void generateStrategy(MiddleValue useValue){
@@ -56,7 +65,7 @@ public class StrategyRunnable implements Runnable {
 		int regionMineNum = useValue.getRegionMineNum();
 		int pos = useValue.getCurrPos();
 		while(pos != -1){
-			System.out.println(count ++);
+			count ++;
 			region = MineRegionCache.removeMarkGridPosFromRegion(region, String.valueOf(pos));
 			poss.append(",").append(pos);
 			closeGridNum --;
@@ -107,8 +116,11 @@ public class StrategyRunnable implements Runnable {
 						Integer gridPosInt = Integer.parseInt(gridPos1);
 						pos = gridPosInt;
 						isFind = true;
+						break;
 					}
 				}
+				if(isFind)
+					break;
 			}
 			if(!isFind){
 				break;
@@ -129,10 +141,13 @@ public class StrategyRunnable implements Runnable {
 				Map<String, Integer> cloneRegion = new HashMap<String, Integer>(region);
 				for(String gridPos1 : gridPossList){
 					Integer gridPosInt = Integer.parseInt(gridPos1);
+					if(!validate(cloneRegion))
+						break;
 					MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion), unCommonRegion);
 					MiddleValueCache.add(setValue);
 					//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
 					cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
+					closeGridNum --;
 				}
 				break;
 			}
@@ -212,6 +227,14 @@ public class StrategyRunnable implements Runnable {
 				allPosList.add(pos);
 		}
 		return new GroupStrategy(allPosList, allPossible);
+	}
+	
+	public boolean validate(Map<String, Integer> region){
+		for(Entry<String, Integer> entry : region.entrySet()){
+			if(entry.getKey().split(",").length < entry.getValue())
+				return false;
+		}
+		return true;
 	}
 	
 	class GroupStrategy{

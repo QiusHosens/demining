@@ -50,6 +50,22 @@ public class LatchCache {
 		latchMap.put("preLatch", preLatch);
 		return latchMap;
 	}
+	
+	public static synchronized CountDownLatch countDownAndGetPreLatch(){
+		if(currLatch == null)
+			currLatch = pop();
+		if(currLatch.getCount() > 0){
+			currLatch.countDown();
+		} else {
+			preLatch = currLatch;
+			if(latchs.isEmpty()){
+				System.out.println(currLatch);
+			}
+			currLatch = pop();
+			currLatch.countDown();
+		}
+		return preLatch;
+	}
 
 	public static synchronized void setCurrLatch(CountDownLatch currLatch) {
 		LatchCache.currLatch = currLatch;
