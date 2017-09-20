@@ -76,7 +76,7 @@ public class MineMouseListener implements MouseListener {
 			break;
 		case MouseEvent.BUTTON3://右键
 			if(GridStateConstants.GRID_STATE_CLOSE == grid.getState())
-				grid.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+				grid.mark();
 			break;
 
 		default:

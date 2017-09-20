@@ -361,6 +361,12 @@ public class MyGrid extends Button {
 		}
 	}
 	
+	public void mark(){
+		this.setState(GridStateConstants.GRID_STATE_CLOSE_MARK_MINE);
+		if(LayoutConstants.MODEL_AUTO == Constants.MODEL_AUTO_TEXT)
+			DeminFrame.getDeminFrame().switchAutoModel();
+	}
+	
 	/**
 	 * 获取标记为雷的格子
 	 * @return

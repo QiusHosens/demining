@@ -216,6 +216,7 @@ public class DeminFrame extends Frame {
 						}
 						else if(mineNum < 0){
 							System.out.println("异常");
+							return;
 						}
 					}
 				}
