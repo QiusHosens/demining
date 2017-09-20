@@ -95,13 +95,13 @@ public class StrategyRunnable implements Runnable {
 				}
 			}
 			
-			if(region.isEmpty()){
-				if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
-					break;
-				Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
-				StrategyDeduceCache.add2(strategy);
-				break;
-			}
+//			if(region.isEmpty()){
+//				if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
+//					break;
+//				Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
+//				StrategyDeduceCache.add2(strategy);
+//				break;
+//			}
 			
 			//找确定是雷的块
 			boolean isFind = false;
@@ -127,12 +127,12 @@ public class StrategyRunnable implements Runnable {
 			}
 		}
 		
-//		Map<String, Integer> commonRegion = getCommonRegion(region);
-//		Map<String, Integer> newUnCommonRegion = exclude(region, commonRegion);
-//		regionMineNum += getUnCommonRegionMineNum(newUnCommonRegion);
-//		closeGridNum -= getUnCommonRegionGridNum(newUnCommonRegion);
-//		unCommonRegion.putAll(newUnCommonRegion);
-//		region = commonRegion;
+		Map<String, Integer> commonRegion = getCommonRegion(region);
+		Map<String, Integer> newUnCommonRegion = exclude(region, commonRegion);
+		regionMineNum += getUnCommonRegionMineNum(newUnCommonRegion);
+		closeGridNum -= getUnCommonRegionGridNum(newUnCommonRegion);
+		unCommonRegion.putAll(newUnCommonRegion);
+		region = commonRegion;
 		
 		if(region != null && !region.isEmpty()){
 			for(Entry<String, Integer> entry1 : region.entrySet()){
@@ -154,16 +154,16 @@ public class StrategyRunnable implements Runnable {
 			//检查是否需要增加线程
 			StrategyGenerator.getStrategyGenerator().check();
 		}
-//		else{
-//			GroupStrategy group = getGroupStrategy(unCommonRegion);
-//			for(String pos1 : group.getPos()){
-//				StringBuilder poss1 = new StringBuilder(poss);
-//				poss1.append(",").append(pos1);
-//				Strategy strategy = new Strategy(poss1.substring(1).toString(), 
-//						group.getPossible().multiply(CollectionUtil.combination(closeGridNum, LayoutConstants.LEFT_MINE - regionMineNum)), regionMineNum);
-//				StrategyDeduceCache.add(strategy);
-//			}
-//		}
+		else{
+			GroupStrategy group = getGroupStrategy(unCommonRegion);
+			for(String pos1 : group.getPos()){
+				StringBuilder poss1 = new StringBuilder(poss);
+				poss1.append(",").append(pos1);
+				Strategy strategy = new Strategy(poss1.substring(1).toString(), 
+						group.getPossible(), closeGridNum, regionMineNum);
+				StrategyDeduceCache.add2(strategy);
+			}
+		}
 	}
 	
 	private Map<String, Integer> getCommonRegion(Map<String, Integer> region){

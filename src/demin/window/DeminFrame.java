@@ -482,6 +482,10 @@ public class DeminFrame extends Frame {
 //			ProbabilityCache.addAll(probabilityList);
 //			probabilityList = ProbabilityCache.get();
 			probabilityList.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
+			System.out.println("probabilityList:");
+			for (Probability probability : probabilityList) {
+				System.out.println(probability.getPos() + " " + probability.getProbability());
+			}
 			
 			StringBuilder sb = new StringBuilder();
 			int pos, row, column;
@@ -503,6 +507,38 @@ public class DeminFrame extends Frame {
 				sb.append("pos: ").append(String.valueOf(pos)).append(" row: ").append(String.valueOf(row)).append(" column: ").append(String.valueOf(column)).append(" probability: ").append(probability.getProbability()).append("<br/>");
 			}
 			sb.append("</html>");
+			
+			//策略2每个块的概率
+			BigDecimal totalPosibleNum2 = new BigDecimal(0);
+			int minPosibleMinNum2 = 0;//最小可能雷数
+			for(Strategy strategy : strategyList2){
+				if(minPosibleMinNum2 == 0 || minPosibleMinNum2 > strategy.getMineNum())
+					minPosibleMinNum2 = strategy.getMineNum();
+			}
+			
+			for(Strategy strategy : strategyList2){
+				BigDecimal possible = strategy.getPossible().multiply(CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum()));
+				strategy.setPossible(possible);
+				totalPosibleNum2 = totalPosibleNum2.add(possible);
+			}
+			
+			List<Probability> probabilityList2 = new ArrayList<>();
+			for(String pos2 : posList){
+				BigDecimal gridPosibleNum = new BigDecimal(0);
+				for (Strategy strategy : strategyList) {
+					String gridPos = strategy.getGrids();
+					List<String> gridPosList = Arrays.asList(gridPos.split(","));
+					if(gridPosList.contains(pos2))
+						gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
+				}
+				Probability gridProbability = new Probability(Integer.parseInt(pos2), gridPosibleNum.divide(totalPosibleNum, Constants.PROBABILITY_SCALE, 0));
+				probabilityList2.add(gridProbability);
+			}
+			probabilityList2.sort((p1, p2) -> p1.getProbability().compareTo(p2.getProbability()));
+			System.out.println("probabilityList2:");
+			for (Probability probability : probabilityList2) {
+				System.out.println(probability.getPos() + " " + probability.getProbability());
+			}
 			
 			tip = getTipDialog(probabilityList.size());
 			tip.setVisible(true);
