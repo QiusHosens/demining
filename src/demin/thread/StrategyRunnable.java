@@ -15,6 +15,7 @@ import demin.cache.LatchCache;
 import demin.cache.MiddleValueCache;
 import demin.cache.MineRegionCache;
 import demin.cache.StrategyDeduceCache;
+import demin.constants.Constants;
 import demin.constants.LayoutConstants;
 import demin.entity.GridPossible;
 import demin.entity.MiddleValue;
@@ -144,7 +145,7 @@ public class StrategyRunnable implements Runnable {
 					Integer gridPosInt = Integer.parseInt(gridPos1);
 					if(!validate(cloneRegion))
 						break;
-					MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion), unCommonRegion);
+					MiddleValue setValue = new MiddleValue(gridPosInt, new StringBuilder(poss), closeGridNum, regionMineNum, new HashMap<>(cloneRegion), new HashMap<>(unCommonRegion));
 					MiddleValueCache.add(setValue);
 					//当前假定地雷在同一区域内,下次不能再假定为地雷,会生成重复策略
 					cloneRegion = MineRegionCache.removeOpenGridPosFromRegion(cloneRegion, gridPos1);
@@ -156,8 +157,12 @@ public class StrategyRunnable implements Runnable {
 			StrategyGenerator.getStrategyGenerator().check();
 		}
 		else{
+			if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
+				return;
 			GroupStrategy group = getGroupStrategy(unCommonRegion);
-			Strategy strategy = new Strategy(new StringBuilder(poss).toString(), 
+			if(!"".equals(poss.toString()))
+				poss = new StringBuilder(poss.substring(1));
+			Strategy strategy = new Strategy(poss.toString(), 
 					group.getPossible(), group.getPos(), closeGridNum, regionMineNum);
 			StrategyDeduceCache.add2(strategy);
 		}
@@ -166,20 +171,27 @@ public class StrategyRunnable implements Runnable {
 	private Map<String, Integer> getCommonRegion(Map<String, Integer> region){
 		Map<String, Integer> common = new HashMap<String, Integer>();
 		Set<String> poss = new HashSet<String>();
+		Set<String> repeatPos = new HashSet<String>();
 		for(Entry<String, Integer> entry : region.entrySet()){
 			String posstr = entry.getKey();
 			String[] posList = posstr.split(",");
-			boolean isRepeat = false;
 			for (String pos : posList) {
 				if(poss.contains(pos)){
-					isRepeat = true;
+					repeatPos.add(pos);
 					break;
 				}else
 					poss.add(pos);
 			}
-			if(isRepeat){
-				Integer mineNum = entry.getValue();
-				common.put(posstr, mineNum);
+		}
+		
+		for(Entry<String, Integer> entry : region.entrySet()){
+			String posstr = entry.getKey();
+			String[] posList = posstr.split(",");
+			for (String pos : posList) {
+				if(repeatPos.contains(pos)){
+					common.put(posstr, entry.getValue());
+					break;
+				}
 			}
 		}
 		return common;
@@ -220,7 +232,13 @@ public class StrategyRunnable implements Runnable {
 			String[] posList = poss.split(",");
 			int mineNum = entry.getValue();
 			allPossible = allPossible.multiply(CollectionUtil.combination(posList.length, mineNum));
-			BigDecimal isMinePossible = new BigDecimal(mineNum);
+		}
+		
+		for(Entry<String, Integer> entry : region.entrySet()){
+			String poss = entry.getKey();
+			String[] posList = poss.split(",");
+			int mineNum = entry.getValue();
+			BigDecimal isMinePossible = allPossible.multiply(CollectionUtil.combination(posList.length - 1, mineNum - 1)).divide(CollectionUtil.combination(posList.length, mineNum), Constants.PROBABILITY_SCALE, 0);
 			for(String pos : posList)
 				allPosList.add(new GridPossible(Integer.parseInt(pos), isMinePossible));
 		}

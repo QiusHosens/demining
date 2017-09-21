@@ -343,7 +343,7 @@ public class DeminFrame extends Frame {
 			}
 			
 			for (Strategy strategy : strategyList) {
-				BigDecimal possible = strategy.getPossible().multiply(CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum()));
+				BigDecimal possible = CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum());
 				strategy.setPossible(possible);
 				totalPosibleNum = totalPosibleNum.add(possible);
 			}
@@ -463,13 +463,14 @@ public class DeminFrame extends Frame {
 					}
 				}
 				
-//				if(region.isEmpty()){
-//					if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
-//						break;
-//					Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
-//					StrategyDeduceCache.add(strategy);
-//					break;
-//				}
+				if(region.isEmpty()){
+					if(LayoutConstants.LEFT_MINE - regionMineNum > closeGridNum)
+						break;
+					Strategy strategy = new Strategy(poss.substring(1).toString(), closeGridNum, regionMineNum);
+//					Strategy strategy = new Strategy(poss.substring(1).toString(), CollectionUtil.combination(LayoutConstants.LEFT_MINE, LayoutConstants.LEFT_MINE - regionMineNum), regionMineNum);
+					StrategyDeduceCache.add(strategy);
+					break;
+				}
 				
 				//找确定是雷的块
 				boolean isFind = false;
@@ -495,12 +496,12 @@ public class DeminFrame extends Frame {
 				}
 			}
 			
-			Map<String, Integer> commonRegion = MineRegionCache.getCommonRegion(region);
-			Map<String, Integer> newUnCommonRegion = MineRegionCache.exclude(region, commonRegion);
-			regionMineNum += MineRegionCache.getUnCommonRegionMineNum(newUnCommonRegion);
-			closeGridNum -= MineRegionCache.getUnCommonRegionGridNum(newUnCommonRegion);
-			unCommonRegion.putAll(newUnCommonRegion);
-			region = commonRegion;
+//			Map<String, Integer> commonRegion = MineRegionCache.getCommonRegion(region);
+//			Map<String, Integer> newUnCommonRegion = MineRegionCache.exclude(region, commonRegion);
+//			regionMineNum += MineRegionCache.getUnCommonRegionMineNum(newUnCommonRegion);
+//			closeGridNum -= MineRegionCache.getUnCommonRegionGridNum(newUnCommonRegion);
+//			unCommonRegion.putAll(newUnCommonRegion);
+//			region = commonRegion;
 			
 			if(region != null && !region.isEmpty()){
 				for(Entry<String, Integer> entry1 : region.entrySet()){
@@ -520,16 +521,16 @@ public class DeminFrame extends Frame {
 					break;
 				}
 			}
-			else{
-				GroupStrategy group = MineRegionCache.getGroupStrategy(unCommonRegion);
-				for(String pos1 : group.getPos()){
-					StringBuilder poss1 = new StringBuilder(poss);
-					poss1.append(",").append(pos1);
-					Strategy strategy = new Strategy(poss1.substring(1).toString(), 
-							group.getPossible(), closeGridNum, regionMineNum);
-					StrategyDeduceCache.add(strategy);
-				}
-			}
+//			else{
+//				GroupStrategy group = MineRegionCache.getGroupStrategy(unCommonRegion);
+//				for(String pos1 : group.getPos()){
+//					StringBuilder poss1 = new StringBuilder(poss);
+//					poss1.append(",").append(pos1);
+//					Strategy strategy = new Strategy(poss1.substring(1).toString(), 
+//							group.getPossible(), closeGridNum, regionMineNum);
+//					StrategyDeduceCache.add(strategy);
+//				}
+//			}
 		}
 		return count;
 	}
@@ -564,8 +565,12 @@ public class DeminFrame extends Frame {
 		
 		Set<String> posList = new HashSet<>();
 		
+		int index = 0;
+		System.out.println("strategy2:");
 		for (Strategy strategy : strategyList2){
 			String gridPos = strategy.getGrids();
+			System.out.print("child strategy" + index + ": ");
+			System.out.print(" common pos: " + gridPos);
 			if(gridPos != null && !"".equals(gridPos)){
 				List<String> gridPosList = Arrays.asList(gridPos.split(","));
 				for (String pos : gridPosList) {
@@ -573,10 +578,17 @@ public class DeminFrame extends Frame {
 				}
 			}
 			
+			System.out.print(" uncommon pos: ");
 			for(GridPossible gridPossible : strategy.getGridPossibles()){
-				posList.add(String.valueOf(gridPossible.getPos()));
+				int pos = gridPossible.getPos();
+				System.out.print(pos + ",");
+				posList.add(String.valueOf(pos));
 			}
+			index ++;
+			System.out.print(" close grid:" + strategy.getLeftCloseNum() + " mine num:" + strategy.getMineNum());
+			System.out.println();
 		}
+		System.out.println();
 		
 		List<Probability> probabilityList2 = new ArrayList<>();
 		for(String pos2 : posList){
