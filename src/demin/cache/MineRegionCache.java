@@ -456,6 +456,20 @@ public class MineRegionCache {
 		return new GroupStrategy(allPosList, allPossible);
 	}
 	
+	public static Set<String> getCommonPos(List<String> posList, Map<String, Integer> region){
+		Set<String> commonPos = new HashSet<>();
+		for(String pos : posList){
+			for(Entry<String, Integer> entry : region.entrySet()){
+				String posStr = entry.getKey();
+				if(Arrays.asList(posStr.split(",")).contains(pos)){
+					commonPos.add(pos);
+					break;
+				}
+			}
+		}
+		return commonPos;
+	}
+	
 	public static void clearNewRegion(){
 		newMineRegions.clear();
 		setCanClearNewRegion(false);

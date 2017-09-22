@@ -617,6 +617,34 @@ public class DeminFrame extends Frame {
 		}
 	}
 	
+	public <T> List<T> calculateProbability(Map<String, Integer> region){
+		List<T> list = new ArrayList<>();
+		Map<String, Integer> cloneRegion = new HashMap<>(region);
+		while(!cloneRegion.isEmpty()){
+			Map<String, Integer> cloneRegion1 = new HashMap<>(cloneRegion);
+			for(Entry<String, Integer> entry : cloneRegion1.entrySet()){
+				String poss = entry.getKey();
+				int mineNum = entry.getValue();
+				List<String> posList = new ArrayList<>(Arrays.asList(poss.split(",")));
+				cloneRegion.remove(poss);
+				Set<String> commonPoss = MineRegionCache.getCommonPos(posList, cloneRegion);
+				
+				//计算非公有域的可能性
+				posList.removeIf(p -> commonPoss.contains(p));
+				int uncommonSize = posList.size();
+				int uncommonMin = mineNum < uncommonSize ? mineNum : uncommonSize;
+				for(int i = 0; i < uncommonMin; i ++){
+					BigDecimal possible = CollectionUtil.combination(uncommonSize, i);
+					//计算公有域的可能性
+					int commonMin = mineNum - i;
+					
+				}
+				break;
+			}
+		}
+		return list;
+	}
+	
 	public void refreshFrame(){
 		validate();
 		repaint();
