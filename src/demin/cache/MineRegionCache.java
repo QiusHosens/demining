@@ -456,18 +456,35 @@ public class MineRegionCache {
 		return new GroupStrategy(allPosList, allPossible);
 	}
 	
-	public static Set<String> getCommonPos(List<String> posList, Map<String, Integer> region){
+	public static Map<String, Object> getCommonPos(List<String> posList, Map<String, Integer> region){
+		Map<String, Object> common = new HashMap<>();
 		Set<String> commonPos = new HashSet<>();
-		for(String pos : posList){
-			for(Entry<String, Integer> entry : region.entrySet()){
-				String posStr = entry.getKey();
-				if(Arrays.asList(posStr.split(",")).contains(pos)){
+		List<List<String>> commonPosGroup = new ArrayList<>();
+		
+		for(Entry<String, Integer> entry : region.entrySet()){
+			String posStr = entry.getKey();
+			List<String> possList = Arrays.asList(posStr.split(","));
+			List<String> one = new ArrayList<>();
+			for(String pos : posList){
+				if(possList.contains(pos)){
 					commonPos.add(pos);
+					one.add(pos);
+				}
+			}
+			
+			boolean isExist = false;
+			for(List<String> old : commonPosGroup){
+				if(CollectionUtil.listEquals(one, old)){
+					isExist = true;
 					break;
 				}
 			}
+			if(!isExist)
+				commonPosGroup.add(one);
 		}
-		return commonPos;
+		common.put("common", commonPos);
+		common.put("group", commonPosGroup);
+		return common;
 	}
 	
 	public static void clearNewRegion(){

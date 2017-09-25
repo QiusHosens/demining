@@ -2,6 +2,7 @@ package demin.util;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import demin.constants.Constants;
@@ -95,7 +96,7 @@ public class CollectionUtil {
 		return mole.divide(denom, Constants.PROBABILITY_SCALE, 0);
 	}
 	
-	public static <T> String listToString(List<T> list, String separator){
+	public static <T> String listToString(Collection<T> list, String separator){
 		int index = 0;
 		StringBuilder sb = new StringBuilder();
 		for (T t : list) {
@@ -106,6 +107,17 @@ public class CollectionUtil {
 			index ++;
 		}
 		return sb.toString();
+	}
+	
+	public static <T> boolean listEquals(Collection<T> list1, Collection<T> list2){
+		for (T t : list2)
+			if(!list1.contains(t))
+				return false;
+		
+		for (T t : list1)
+			if(!list2.contains(t))
+				return false;
+		return true;
 	}
 	
 	public static void main(String[] args){

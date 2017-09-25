@@ -51,6 +51,14 @@ public class MiddleValue {
 		this.possible = possible;
 		this.latch = latch;
 	}
+	
+	public MiddleValue(StringBuilder gridPos, BigDecimal possible, int closeGridNum, int regionMineNum, Map<String, Integer> region){
+		this.gridPos = gridPos;
+		this.possible = possible;
+		this.closeGridNum = closeGridNum;
+		this.regionMineNum = regionMineNum;
+		this.commonRegion = region;
+	}
 
 	public CountDownLatch getLatch() {
 		return latch;

@@ -14,6 +14,11 @@ public class Strategy {
 	private Integer leftCloseNum;
 	
 	private List<GridPossible> gridPossibles;
+	
+	public Strategy(String grids, Integer mineNum){
+		this.grids = grids;
+		this.mineNum = mineNum;
+	}
 
 	public Strategy(String grids, BigDecimal possible, Integer mineNum){
 		this.grids = grids;

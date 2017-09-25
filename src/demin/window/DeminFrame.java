@@ -48,6 +48,7 @@ import demin.entity.MyGrid;
 import demin.entity.OneGame;
 import demin.entity.Probability;
 import demin.entity.Strategy;
+import demin.entity.StrategyGroup;
 import demin.listener.MainWindowListener;
 import demin.listener.MineMouseListener;
 import demin.listener.ModelMouseListener;
@@ -617,27 +618,58 @@ public class DeminFrame extends Frame {
 		}
 	}
 	
-	public <T> List<T> calculateProbability(Map<String, Integer> region){
-		List<T> list = new ArrayList<>();
-		Map<String, Integer> cloneRegion = new HashMap<>(region);
-		while(!cloneRegion.isEmpty()){
-			Map<String, Integer> cloneRegion1 = new HashMap<>(cloneRegion);
-			for(Entry<String, Integer> entry : cloneRegion1.entrySet()){
+	@SuppressWarnings("unchecked")
+	public List<StrategyGroup> calculateProbability(Map<String, Integer> region){
+		Stack<MiddleValue> stack = new Stack<>();
+		MiddleValue initValue = new MiddleValue(new StringBuilder(), new BigDecimal(1), this.closeCount, 0, region);
+		stack.push(initValue);
+		List<StrategyGroup> list = new ArrayList<>();
+		while(!stack.isEmpty()){
+			MiddleValue value = stack.pop();
+			StringBuilder gridPos = value.getGridPos();
+			Map<String, Integer> region1 = value.getCommonRegion();
+			int closeGridNum = value.getCloseGridNum();
+			int regionMineNum = value.getRegionMineNum();
+			
+			for(Entry<String, Integer> entry : region1.entrySet()){
 				String poss = entry.getKey();
 				int mineNum = entry.getValue();
 				List<String> posList = new ArrayList<>(Arrays.asList(poss.split(",")));
-				cloneRegion.remove(poss);
-				Set<String> commonPoss = MineRegionCache.getCommonPos(posList, cloneRegion);
+				closeGridNum -= posList.size();
+				regionMineNum += mineNum;
+				Map<String, Object> common = MineRegionCache.getCommonPos(posList, region1);
+				Set<String> commonPoss = (Set<String>) common.get("common");
+				List<List<String>> commonPosGroup = (List<List<String>>) common.get("group");
 				
 				//计算非公有域的可能性
 				posList.removeIf(p -> commonPoss.contains(p));
+				String uncommonPos = CollectionUtil.listToString(posList, ",");
 				int uncommonSize = posList.size();
 				int uncommonMin = mineNum < uncommonSize ? mineNum : uncommonSize;
-				for(int i = 0; i < uncommonMin; i ++){
+				int tmp_mineNum;
+				for(int i = 0; i <= uncommonMin; i ++){
+					tmp_mineNum = i;
+					Map<String, Integer> cloneRegion1 = new HashMap<>(region1);
+					cloneRegion1.remove(poss);
 					BigDecimal possible = CollectionUtil.combination(uncommonSize, i);
-					//计算公有域的可能性
-					int commonMin = mineNum - i;
+					gridPos.append(",").append(uncommonPos);
 					
+					if(i < uncommonMin){
+						//计算公有域的可能性
+						while(!commonPosGroup.isEmpty()){
+							for(int index = commonPosGroup.size() - 1; index >= 0; index --){
+								List<String> one = commonPosGroup.remove(index);
+								int oneMine = mineNum - i < one.size() ? mineNum - i : one.size();
+								for(int j = 0; j <= oneMine; j ++){
+									tmp_mineNum += j;
+								}
+							}
+						}
+					}
+					if(tmp_mineNum != mineNum)
+						continue;
+					MiddleValue setValue = new MiddleValue(new StringBuilder(gridPos), possible, closeGridNum, regionMineNum, new HashMap<>(cloneRegion1));
+					stack.push(setValue);
 				}
 				break;
 			}
