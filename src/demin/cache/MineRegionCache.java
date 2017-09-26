@@ -266,6 +266,54 @@ public class MineRegionCache {
 	 * 移除已标记为打开的块
 	 * @param grid
 	 */
+	public static Map<String, Integer> removeGridPosRegionAndMineFromRegion(Map<String, Integer> region, List<String> possList, int regionMineNum){
+		List<String> removeKeys = new ArrayList<String>();
+		Map<String, Integer> addRegions = new HashMap<String, Integer>();
+		for (Entry<String, Integer> entry : region.entrySet()) {
+			String poss = entry.getKey();
+			Integer mineNum = entry.getValue();
+			List<String> posList = new ArrayList<String>();
+			posList.addAll(Arrays.asList(poss.split(",")));
+			boolean isFind = true;
+			for(String pos : possList){
+				if(!posList.contains(pos)){
+					isFind = false;
+					break;
+				}
+			}
+			if(isFind){
+				removeKeys.add(poss);
+				for(String pos : possList){
+					posList.remove(pos);
+				}
+				int index = 0;
+				poss = "";
+				for (String string : posList) {
+					if(index == 0)
+						poss += string;
+					else
+						poss += "," + string;
+					index ++;
+				}
+				mineNum -= regionMineNum;
+				
+				if(!"".equals(poss)){
+					addRegions.put(poss, mineNum);
+				}
+			}
+		}
+		
+		for(String key : removeKeys)
+			region.remove(key);
+		
+		region.putAll(addRegions);
+		return region;
+	}
+	
+	/**
+	 * 移除已标记为打开的块
+	 * @param grid
+	 */
 	public static void removeOpenGridPos(MyGrid grid){
 		String pos = String.valueOf(grid.getPos());
 		List<String> removeKeys = new ArrayList<String>();
@@ -472,14 +520,31 @@ public class MineRegionCache {
 				}
 			}
 			
-			boolean isExist = false;
+			//检查大区域,化为小区域
+			boolean canAdd = true;
+			List<List<String>> removeGroups = new ArrayList<>();
+			List<List<String>> addGroups = new ArrayList<>();
 			for(List<String> old : commonPosGroup){
-				if(CollectionUtil.listEquals(one, old)){
-					isExist = true;
+				if(CollectionUtil.listEquals(one, old))
 					break;
+				List<String> intersection = CollectionUtil.intersection(one, old);
+				if(!intersection.isEmpty()){
+					canAdd = false;
+					removeGroups.add(old);
+					addGroups.add(intersection);
+					List<String> thisExcludeOther = CollectionUtil.exclude(one, old);
+					List<String> otherExcludeThis = CollectionUtil.exclude(old, one);
+					if(!thisExcludeOther.isEmpty())
+						addGroups.add(thisExcludeOther);
+					if(!otherExcludeThis.isEmpty())
+						addGroups.add(otherExcludeThis);
 				}
 			}
-			if(!isExist)
+			
+			if(!removeGroups.isEmpty())
+				commonPosGroup.removeIf(g -> removeGroups.contains(g));
+			commonPosGroup.addAll(addGroups);
+			if(canAdd)
 				commonPosGroup.add(one);
 		}
 		common.put("common", commonPos);
