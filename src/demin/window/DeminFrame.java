@@ -676,7 +676,9 @@ public class DeminFrame extends Frame {
 					List<String> posList = new ArrayList<>(Arrays.asList(poss.split(",")));
 					closeGridNum -= posList.size();
 					regionMineNum += mineNum;
-					Map<String, Object> common = MineRegionCache.getCommonPos(posList, region1);
+					Map<String, Integer> cloneRegion1 = new HashMap<>(region1);
+					cloneRegion1.remove(poss);
+					Map<String, Object> common = MineRegionCache.getCommonPos(posList, cloneRegion1);
 					Set<String> commonPoss = (Set<String>) common.get("common");
 					List<List<String>> commonPosGroup = (List<List<String>>) common.get("group");
 					
@@ -685,16 +687,12 @@ public class DeminFrame extends Frame {
 					String uncommonPos = CollectionUtil.listToString(posList, ",");
 					int uncommonSize = posList.size();
 					int uncommonMin = mineNum < uncommonSize ? mineNum : uncommonSize;
-					int tmp_mineNum;
 					for(int i = 0; i <= uncommonMin; i ++){
-						tmp_mineNum = i;
-						Map<String, Integer> cloneRegion1 = new HashMap<>(region1);
-						cloneRegion1.remove(poss);
 						BigDecimal possible = allPossible.multiply(CollectionUtil.combination(uncommonSize, i));
 						if(i != 0)
 							gridPos.append(",").append(uncommonPos);
 						
-						if(i < uncommonMin){
+						if(i < uncommonMin && !commonPosGroup.isEmpty()){
 							Stack<RegionMineMiddle> middleStack = new Stack<>();
 							RegionMineMiddle initRegion = new RegionMineMiddle(new StringBuilder(gridPos), new ArrayList<>(commonPosGroup), possible, new HashMap<String, Integer>(cloneRegion1), mineNum - i);
 							middleStack.push(initRegion);
@@ -734,13 +732,10 @@ public class DeminFrame extends Frame {
 								}
 							}
 						}
-						else{
+						else if(i == mineNum){
 							MiddleValue setValue = new MiddleValue(new StringBuilder(gridPos), possible, closeGridNum, regionMineNum, new HashMap<>(cloneRegion1));
 							stack.push(setValue);
 						}
-						
-						if(tmp_mineNum != mineNum)
-							continue;
 					}
 					break;
 				}
