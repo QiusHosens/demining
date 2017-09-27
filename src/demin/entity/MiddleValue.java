@@ -1,6 +1,7 @@
 package demin.entity;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
@@ -17,6 +18,8 @@ public class MiddleValue {
 	private Map<String, Integer> commonRegion;
 	
 	private Map<String, Integer> unCommonRegion;
+	
+	private Map<List<String>, Integer> resultRegion;
 	
 	private CountDownLatch latch;
 	
@@ -52,12 +55,13 @@ public class MiddleValue {
 		this.latch = latch;
 	}
 	
-	public MiddleValue(StringBuilder gridPos, BigDecimal possible, int closeGridNum, int regionMineNum, Map<String, Integer> region){
+	public MiddleValue(StringBuilder gridPos, BigDecimal possible, int closeGridNum, int regionMineNum, Map<String, Integer> region, Map<List<String>, Integer> resultRegion){
 		this.gridPos = gridPos;
 		this.possible = possible;
 		this.closeGridNum = closeGridNum;
 		this.regionMineNum = regionMineNum;
 		this.commonRegion = region;
+		this.resultRegion = resultRegion;
 	}
 
 	public CountDownLatch getLatch() {
@@ -122,6 +126,14 @@ public class MiddleValue {
 
 	public void setPossible(BigDecimal possible) {
 		this.possible = possible;
+	}
+
+	public Map<List<String>, Integer> getResultRegion() {
+		return resultRegion;
+	}
+
+	public void setResultRegion(Map<List<String>, Integer> resultRegion) {
+		this.resultRegion = resultRegion;
 	}
 	
 }

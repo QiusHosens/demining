@@ -8,6 +8,8 @@ public class RegionMineMiddle {
 	
 	private StringBuilder gridPos;
 	
+	private Map<List<String>, Integer> resultRegion;
+	
 	private List<List<String>> regionGroup;
 	
 	private BigDecimal possible;
@@ -16,12 +18,13 @@ public class RegionMineMiddle {
 	
 	private Integer mineNum;
 	
-	public RegionMineMiddle(StringBuilder gridPos, List<List<String>> regionGroup, BigDecimal possible, Map<String, Integer> region, Integer mineNum){
+	public RegionMineMiddle(StringBuilder gridPos, List<List<String>> regionGroup, BigDecimal possible, Map<String, Integer> region, Integer mineNum, Map<List<String>, Integer> resultRegion){
 		this.gridPos = gridPos;
 		this.regionGroup = regionGroup;
 		this.possible = possible;
 		this.region = region;
 		this.mineNum = mineNum;
+		this.resultRegion = resultRegion;
 	}
 
 	public StringBuilder getGridPos() {
@@ -63,5 +66,13 @@ public class RegionMineMiddle {
 	public void setMineNum(Integer mineNum) {
 		this.mineNum = mineNum;
 	}
-	
+
+	public Map<List<String>, Integer> getResultRegion() {
+		return resultRegion;
+	}
+
+	public void setResultRegion(Map<List<String>, Integer> resultRegion) {
+		this.resultRegion = resultRegion;
+	}
+
 }

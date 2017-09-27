@@ -2,6 +2,7 @@ package demin.entity;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public class Strategy {
 	
@@ -14,6 +15,8 @@ public class Strategy {
 	private Integer leftCloseNum;
 	
 	private List<GridPossible> gridPossibles;
+	
+	private Map<List<String>, Integer> resultRegion;
 	
 	public Strategy(String grids, Integer mineNum){
 		this.grids = grids;
@@ -37,6 +40,14 @@ public class Strategy {
 		this.possible = possible;
 		this.leftCloseNum = leftCloseNum;
 		this.mineNum = mineNum;
+	}
+	
+	public Strategy(String grids, BigDecimal possible, Integer leftCloseNum, Integer mineNum, Map<List<String>, Integer> resultRegion){
+		this.grids = grids;
+		this.possible = possible;
+		this.leftCloseNum = leftCloseNum;
+		this.mineNum = mineNum;
+		this.resultRegion = resultRegion;
 	}
 	
 	public Strategy(String grids, BigDecimal possible, List<GridPossible> gridPossibles, Integer leftCloseNum, Integer mineNum){
@@ -85,6 +96,14 @@ public class Strategy {
 
 	public void setGridPossibles(List<GridPossible> gridPossibles) {
 		this.gridPossibles = gridPossibles;
+	}
+
+	public Map<List<String>, Integer> getResultRegion() {
+		return resultRegion;
+	}
+
+	public void setResultRegion(Map<List<String>, Integer> resultRegion) {
+		this.resultRegion = resultRegion;
 	}
 
 	public boolean equals(Strategy s){

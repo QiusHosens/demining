@@ -627,7 +627,7 @@ public class DeminFrame extends Frame {
 	@SuppressWarnings("unchecked")
 	public List<StrategyGroup> calculateProbability(Map<String, Integer> region){
 		Stack<MiddleValue> stack = new Stack<>();
-		MiddleValue initValue = new MiddleValue(new StringBuilder(), new BigDecimal(1), this.closeCount, 0, new HashMap<>(region));
+		MiddleValue initValue = new MiddleValue(new StringBuilder(), new BigDecimal(1), this.closeCount, 0, new HashMap<>(region), new HashMap<>());
 		stack.push(initValue);
 		List<StrategyGroup> list = new ArrayList<>();
 		while(!stack.isEmpty()){
@@ -637,6 +637,7 @@ public class DeminFrame extends Frame {
 			Map<String, Integer> region1 = value.getCommonRegion();
 			int closeGridNum = value.getCloseGridNum();
 			int regionMineNum = value.getRegionMineNum();
+			Map<List<String>, Integer> valueResultRegion = value.getResultRegion();
 			
 			if(!region1.isEmpty()){
 				boolean can = true;
@@ -694,7 +695,10 @@ public class DeminFrame extends Frame {
 						
 						if(i < uncommonMin && !commonPosGroup.isEmpty()){
 							Stack<RegionMineMiddle> middleStack = new Stack<>();
-							RegionMineMiddle initRegion = new RegionMineMiddle(new StringBuilder(gridPos), new ArrayList<>(commonPosGroup), possible, new HashMap<String, Integer>(cloneRegion1), mineNum - i);
+							Map<List<String>, Integer> resultRegion = new HashMap<>();
+							if(i != 0)
+								resultRegion.put(posList, i);
+							RegionMineMiddle initRegion = new RegionMineMiddle(new StringBuilder(gridPos), new ArrayList<>(commonPosGroup), possible, new HashMap<String, Integer>(cloneRegion1), mineNum - i, resultRegion);
 							middleStack.push(initRegion);
 							//计算公有域的可能性
 							while(!middleStack.isEmpty()){
@@ -703,19 +707,23 @@ public class DeminFrame extends Frame {
 								List<List<String>> regionGroup = middle.getRegionGroup();
 								Map<String, Integer> middleRegion = middle.getRegion();
 								BigDecimal middlePossible = middle.getPossible();
+								Map<List<String>, Integer> middleResultRegion = middle.getResultRegion();
 								int middleMineNum = middle.getMineNum();//区域剩下的可能雷数
-								List<String> thisGroup = regionGroup.remove(0);
 								
 								if(middleMineNum == 0){
-									MiddleValue setValue = new MiddleValue(new StringBuilder(middlePos), middlePossible, closeGridNum, regionMineNum, new HashMap<>(middleRegion));
+									MiddleValue setValue = new MiddleValue(new StringBuilder(middlePos), middlePossible, closeGridNum, regionMineNum, new HashMap<>(middleRegion), middleResultRegion);
 									stack.push(setValue);
 								}
 								else{
+									if(regionGroup.isEmpty())
+										continue;
+									List<String> thisGroup = regionGroup.remove(0);
 									int oneMineNum = thisGroup.size() < middleMineNum ? thisGroup.size() : middleMineNum;
 									for(int index = 0; index <= oneMineNum; index ++){
 										StringBuilder oneGrids = new StringBuilder(middlePos);
 										BigDecimal onePossible = middlePossible;
 										Map<String, Integer> oneRegion = new HashMap<>(middleRegion);
+										Map<List<String>, Integer> oneResultRegion = new HashMap<>(middleResultRegion);
 										if(index == 0){
 											for(String pos : thisGroup)
 												oneRegion = MineRegionCache.removeOpenGridPosFromRegion(oneRegion, pos);
@@ -725,15 +733,18 @@ public class DeminFrame extends Frame {
 											oneRegion = MineRegionCache.removeGridPosRegionAndMineFromRegion(oneRegion, thisGroup, index);
 											middleMineNum -= index;
 											onePossible = onePossible.multiply(CollectionUtil.combination(index, thisGroup.size()));
+											oneResultRegion.put(thisGroup, index);
 										}
-										RegionMineMiddle setRegion = new RegionMineMiddle(new StringBuilder(oneGrids), new ArrayList<>(regionGroup), onePossible, new HashMap<String, Integer>(oneRegion), mineNum - index);
+										RegionMineMiddle setRegion = new RegionMineMiddle(new StringBuilder(oneGrids), new ArrayList<>(regionGroup), onePossible, new HashMap<String, Integer>(oneRegion), mineNum - index, new HashMap<>(oneResultRegion));
 										middleStack.push(setRegion);
 									}
 								}
 							}
 						}
 						else if(i == mineNum){
-							MiddleValue setValue = new MiddleValue(new StringBuilder(gridPos), possible, closeGridNum, regionMineNum, new HashMap<>(cloneRegion1));
+							Map<List<String>, Integer> resultRegion = new HashMap<>();
+							resultRegion.put(posList, i);
+							MiddleValue setValue = new MiddleValue(new StringBuilder(gridPos), possible, closeGridNum, regionMineNum, new HashMap<>(cloneRegion1), resultRegion);
 							stack.push(setValue);
 						}
 					}
@@ -741,7 +752,7 @@ public class DeminFrame extends Frame {
 				}
 			}
 			else{
-				Strategy strategy = new Strategy(gridPos.toString(), allPossible, closeGridNum, regionMineNum);
+				Strategy strategy = new Strategy(gridPos.toString(), allPossible, closeGridNum, regionMineNum, valueResultRegion);
 				StrategyDeduceCache.add3(strategy);
 			}
 		}
@@ -750,6 +761,11 @@ public class DeminFrame extends Frame {
 		if(!strategyList.isEmpty()){
 			BigDecimal totalPosibleNum = new BigDecimal(0);
 			int minPosibleMinNum = 0;//最小可能雷数
+			
+			for(Strategy strategy : strategyList){
+				if(minPosibleMinNum == 0 || minPosibleMinNum > strategy.getMineNum())
+					minPosibleMinNum = strategy.getMineNum();
+			}
 			
 			for (Strategy strategy : strategyList) {
 				BigDecimal possible = strategy.getPossible().add(CollectionUtil.combinateDivide(strategy.getLeftCloseNum(), LayoutConstants.LEFT_MINE - minPosibleMinNum, LayoutConstants.LEFT_MINE - strategy.getMineNum()));
@@ -776,10 +792,19 @@ public class DeminFrame extends Frame {
 			for(String pos : posList){
 				BigDecimal gridPosibleNum = new BigDecimal(0);
 				for (Strategy strategy : strategyList) {
-					String gridPos = strategy.getGrids();
-					List<String> gridPosList = Arrays.asList(gridPos.split(","));
-					if(gridPosList.contains(pos))
-						gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
+//					String gridPos = strategy.getGrids();
+//					List<String> gridPosList = Arrays.asList(gridPos.split(","));
+//					if(gridPosList.contains(pos))
+//						gridPosibleNum = gridPosibleNum.add(strategy.getPossible());
+					
+					Map<List<String>, Integer> resultRegion = strategy.getResultRegion();
+					for(Entry<List<String>, Integer> entry : resultRegion.entrySet()){
+						List<String> oneRegionPosList = entry.getKey();
+						if(oneRegionPosList.contains(pos)){
+							gridPosibleNum = gridPosibleNum.add(strategy.getPossible().multiply(new BigDecimal(entry.getValue())).divide(new BigDecimal(oneRegionPosList.size()), Constants.PROBABILITY_SCALE, 0));
+							break;
+						}
+					}
 				}
 				Probability gridProbability = new Probability(Integer.parseInt(pos), gridPosibleNum.divide(totalPosibleNum, Constants.PROBABILITY_SCALE, 0));
 				probabilityList.add(gridProbability);
